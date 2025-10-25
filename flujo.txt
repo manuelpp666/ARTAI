@@ -1,0 +1,22 @@
+[Usuario]
+    │
+    ▼
+[Chat (interfaz web con Flask)]
+    │
+    ▼
+[Modelo de Lenguaje (tipo GPT)]
+ ├─> Interpreta lo que el usuario dice
+ ├─> Si es conversación → responde con texto artístico
+ └─> Si detecta que el usuario pide generar una imagen
+        │
+        ▼
+        CNN → detecta estilo o color base
+        ▼
+    [Modelo Generador de Imágenes (difusión)]
+        ├─> Recibe la descripción del Modelo de Lenguaje
+        ├─> Genera una imagen artística coherente con el prompt
+        ▼
+[Salida: Imagen generada + texto del chatbot]
+    │
+    ▼
+[Usuario ve el resultado y puede volver a interactuar]

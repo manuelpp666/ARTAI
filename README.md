@@ -8,6 +8,7 @@ arte_chatbot/
 │   │   ├── nlp_module/             # Comprensión y generación de texto artístico
 │   │   │   ├── preprocess.py       # Limpieza, tokenización, embeddings
 │   │   │   ├── transformer.py      # Modelo Transformer entrenado
+│   │   │   ├── train.py            # Entrenamiento desde cero o fine-tuning
 │   │   │   └── generator.py        # Respuesta generativa (estilo ChatGPT)
 │   │   │
 │   │   ├── diffusion_module/       # Generador de imágenes artísticas
@@ -33,7 +34,7 @@ arte_chatbot/
 │
 ├── datasets/                       # Datos para entrenamiento
 │   ├── wikiart/                    # Imágenes por artista o estilo
-│   ├── literatura/                 # Textos, poemas, descripciones de arte
+│   ├── español/                    # Lenguaje Español
 │   └── prompts/                    # Prompts textuales para entrenamiento cruzado
 │
 ├── models/                         # Modelos entrenados (.pt, .pkl)
@@ -58,38 +59,33 @@ arte_chatbot/
                         │        INTERFAZ WEB        │
                         │  Chat + subida de imagen   │
                         │  + generación de arte/texto│
-                        │   → Streamlit / Flask      │
+                        │   → Flask / Streamlit      │
                         └────────────┬───────────────┘
                                      │
                 ┌────────────────────┼────────────────────┐
                 │                                         │
        ┌────────▼────────┐                      ┌─────────▼──────────┐
        │   MÓDULO NLP    │                      │   MÓDULO VISUAL    │
-       │ (Transformers)  │                      │ (Difusión / CNN)   │
-       │ Comprende y     │                      │ Genera o reconoce  │
-       │ genera texto     │                     │ imágenes artísticas │
+       │ (Transformer)   │                      │ (Difusión/CNN)         │
+       │ Comprende texto │                      │ Genera imágenes     │
+       │ y crea prompts  │                      │ artísticas desde    │
+       │ artísticos       │                     │ texto               │
        └────────┬────────┘                      └────────┬───────────┘
                 │                                         │
    ┌────────────▼────────────┐             ┌──────────────▼─────────────┐
-   │  Embeddings semánticos  │             │   Extracción o generación  │
-   │  del texto (tokenizer + │             │   visual (UNet, DDPM)     │
-   │  Transformer Encoder)   │             │   Condicionado al texto   │
+   │  Embeddings semánticos  │             │   Generación visual        │
+   │  + Decoder Transformer  │             │   (UNet + DDPM o SD)       │
+   │  (produce texto final o │             │   condicionado al prompt   │
+   │   prompt visual)        │             │   textual del modelo NLP   │
    └────────────┬────────────┘             └──────────────┬─────────────┘
-                │                                         │
-      ┌─────────▼─────────┐                  ┌────────────▼───────────┐
-      │ Decoder Transformer│                  │ Modelo de Difusión     │
-      │ (Genera respuestas │                  │ (Genera arte o estilo  │
-      │  textuales)        │                  │   desde ruido o texto) │
-      └─────────┬─────────┘                  └────────────┬───────────┘
                 │                                         │
                 └────────────────┬────────────────────────┘
                                  │
                  ┌───────────────▼─────────────────┐
                  │     MÓDULO DE FUSIÓN / CONTROL  │
-                 │ - Fusiona texto e imagen         │
-                 │ - Decide si responder, describir │
-                 │   o generar arte                 │
-                 │ - Controla prompts cruzados      │
+                 │ - Decide: responder o generar    │
+                 │ - Coordina interacción texto↔imagen │
+                 │ - Combina salida final (arte + texto)│
                  └─────────────────────────────────┘
                                  │
                       ┌──────────▼───────────┐

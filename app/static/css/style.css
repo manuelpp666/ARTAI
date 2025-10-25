@@ -7,7 +7,6 @@
 body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
     font-family: 'Nunito', sans-serif;
     height: 100vh;
     color: #3e2c19;
@@ -61,12 +60,13 @@ header p {
 
 #chat-box {
     flex-grow: 1;
-    overflow-y: auto;
+    overflow-y: auto; /* ya lo tienes */
     padding: 25px;
     display: flex;
     flex-direction: column;
     gap: 16px;
     background: #faf8f5;
+    max-height: 60vh; /* o ajusta según quieras */
 }
 
 .message {
@@ -77,6 +77,9 @@ header p {
     animation: slideIn 0.3s ease;
     position: relative;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+    word-wrap: break-word; /* añade esta línea */
+    overflow-wrap: break-word; /* compatibilidad */
 }
 
 .user {
@@ -92,6 +95,8 @@ header p {
     border: 1px solid #e0cba8;
     color: #4a3b2c;
     border-top-left-radius: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .message img {
