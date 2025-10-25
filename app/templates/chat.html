@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArteChatbot 🎨</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <canvas id="background"></canvas>
+
+    <div class="container">
+        <header>
+            <h1>🖌️ ArteChatbot</h1>
+            <p>Habla con el arte. Inspira y crea.</p>
+        </header>
+
+        <div id="chat-box"></div>
+
+        <div class="input-area">
+            <input id="user-input" type="text" placeholder="Escribe algo sobre arte..." autofocus>
+            <button id="send-btn">🎨</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>
