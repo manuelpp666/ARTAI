@@ -1,0 +1,1586 @@
+﻿
+PREFACE
+
+JUAN RAMÓN JIMÉNEZ
+
+CAPÍTULOS
+
+I. PLATERO
+
+Verbos de la primera conjugación.
+
+--El verbo irregular _ir_.
+
+II. EL LOCO
+
+Verbos de la segunda y la tercera conjugaciones.
+
+--Adjetivos de color.
+
+III. JUEGOS DEL ANOCHECER
+
+El imperfecto y pretérito de indicativo.
+
+IV. LA ESPINA
+
+La comparación de los adjetivos y de los adverbios.
+
+V. EL NIÑO TONTO
+
+Verbos que sufren cambios de raíz.
+
+--Uso del futuro para expresar probabilidad.
+
+--Los verbos irregulares _volver, acordar y pensar_.
+
+VI. EL CANARIO VUELA
+
+Verbos que sufren cambios de raíz (_continuación_).
+
+VII. EL ALJIBE
+
+Verbos que sufren cambios de ortografía.
+
+--Usos idiomáticos de _hacer_.
+
+--Los verbos irregulares _apagar, cruzar y seguir_.
+
+VIII. LA SANGUIJUELA
+
+Verbos que sufren cambios de ortografía.
+
+--Las preposiciones _por_ y _para_.
+
+--Los verbos irregulares _coger, arrancar y parecer_.
+
+IX. LAS TRES VIEJAS
+
+El modo imperativo.
+
+--La concordancia de los adjetivos.
+
+X. LA CARRETILLA
+
+Los diminutivos.
+
+--Los verbos irregulares _querer_ y _sonreír_.
+
+XI. EL PAN
+
+Los verbos irregulares _decir_ y _dar_.
+
+XII. LA ARRULLADORA
+
+Los verbos reflexivos.
+
+XIII. ALEGRÍA
+
+Los verbos reflexivos (_continuación_).
+
+--_Hacer + _infinitivo_.
+
+XIV. EL SELLO
+
+Los adjetivos y pronombres posesivos.
+
+--Usos de _tener_ y _haber_.
+
+--El verbo irregular _traer_.
+
+XV. EL TÍO DE LAS VISTAS
+
+Los participios pasivos irregulares.
+
+--El perfecto de indicativo.
+
+XVI. LA COZ
+
+Los gerundios irregulares.
+
+--Las conjunciones.
+
+XVII. ESCALOFRÍO
+
+Los adverbios.
+
+--Los pronombres y adjetivos indeterminados.
+
+XVIII. PASAN LOS PATOS
+
+EL subjuntivo después de _como si_.
+
+--El verbo irregular _dar_.
+
+XIX. LA NIÑA CHICA
+
+Los pronombres complementos.
+
+--_Hacia_ y _hasta_.
+
+XX. LOS TOROS
+
+Los adjetivos y pronombres demostrativos.
+
+--Los pronombres relativos.
+
+XXI. SARITO
+
+Verbos que piden preposiciones antes de un infinitivo.
+
+--_Mismo_.
+
+XXII. ALMIRANTE
+
+La _a_ personal.
+
+--_Saber y conocer_.
+
+XXIII. EL CANARIO SE MUERE
+
+Usos del infinitivo.
+
+--_Dejar, salir y partir_.
+
+XXIV. SUSTO
+
+Los verbos que terminan en--_uír_.
+
+--Usos de _haber_ en varios modismos; _haber de, haber que_.
+
+XXV. LOS GITANOS
+
+_Pedir y preguntar_.
+
+XXVI. LA CORONA DE PEREJIL
+
+_Ser justo, tener razón, tener derecho y hacer bien_.
+
+XXVII. LOS REYES MAGOS
+
+Usos de _ser_ y _estar_.
+
+--El verbo irregular _poner_.
+
+XXVIII. EL ALBA
+
+Usos del subjuntivo en cláusulas adjetivas o adverbiales.
+
+--El verbo irregular _caer_.
+
+XXIX. CARNAVAL
+
+Negaciones.
+
+--El verbo _erguir_.
+
+XXX. LA MUERTE
+
+El subjuntivo en cláusulas substantivas.
+
+--El verbo irregular _poder_.
+
+XXXI. NOSTALGIA
+
+Uso del infinitivo después de verbos de percepción.
+
+--El verbo irregular _oír_.
+
+XXXII. MELANCOLÍA
+
+Frases condicionales.
+
+--El verbo irregular _ver_.
+
+NOTES
+
+VOCABULARY
+
+
+
+[Illustration: JUAN RAMÓN JIMÉNEZ]
+
+
+
+JUAN RAMÓN JIMÉNEZ
+
+_Platero y yo_ ... Platero, el borriquito, y Juan Ramón, el poeta. Vais
+a leer la historia de estos dos personajes simpáticos, vivida por ambos
+y escrita por el único de ellos que sabía escribir. Al presentároslos no
+os puedo decir del borriquito nada nuevo porque sólo sé de él lo que el
+poeta nos dice; pero de Juan Ramón puedo deciros muchas cosas que él no
+ha dicho de sí mismo ni estaba bien que dijese.
+
+La verdad es que si me pusiera a hablar sinceramente, tendría que
+deciros no poco también acerca del dichoso borriquito cuya vida,
+andanzas y muerte ha pintado Juan Ramón con tanto amor. Su pintura me
+conmueve y me intriga como no lo hicieron nunca los borriquitos de
+verdad. ¡Y cuidado si los españoles de muchachos gozamos cuando nos es
+dado trabar amistad con algún asno, burro o pollino de los innumerables
+que en nuestra tierra hay y que llevan sobre sus lomos tantas cargas y
+son el consuelo y alivio de los pobres! Borriquitos de España, que con
+vuestro pasito corto andáis y reandáis nuestros caminos polvorientos y
+abrasados trayendo el agua de la fuente, llevando la ropa al río, la
+retama al horno, la comida a los segadores y a los mozos de las eras;
+cabalgadura sumisa de viejos, niños y mujeres, que aguantas ancas,
+hambre y malos tratos; sobre la que viajan cantando o durmiendo
+arrieros, gitanos y campesinos: borriquitos de España, alegres y
+trágicos, bien merecéis que os paguemos el bien que os debemos y el mal
+que os hacemos con un poco de amor y de piedad.
+
+Pero no creo que tengan queja de nosotros los borriquitos de España si
+saben que en la obra de arte mayor que el espíritu español ha producido,
+uno de su especie, el rucio de Sancho, ha ganado la inmortalidad ni más
+ni menos que Sancho mismo, Rocinante y Don Quijote.
+
+Ahora de nuevo, trescientos años después, el poeta español que sabe más
+de ternura, pureza y elegancia sentimental, ha pasado su mano delicada
+sobre el lomo peludo de la pobre bestia esclava, y a la caricia de su
+mano y de su mirada ha surgido Platero a la vida inmortal. Nosotros no
+hemos visto nunca a Platero y sin embargo le vemos y le queremos, y
+cuando pasa a nuestro lado un burrito de los alegres se nos van los ojos
+tras él y decimos: Ahí va Platero. ¡Platero, que, según sabemos, murió y
+fue enterrado y cuya alma está en el cielo de Moguer! Ni más ni menos
+que cuando las gentes decían apenas veían algún rocín flaco: Allí va
+Rocinante!
+
+Y el caso es que el Platerillo del cuento, aunque tiene mucho de un
+burro de verdad, nos parece más bien un asnillo soñado y fantástico,
+como si fuera sólo una ilusión en la que estuvieran fundidas la ilusión
+que los niños se hacen de los burros y la que los burros deben hacerse
+de sí mismos en sus horas de ensueño. Y un poeta grande y sencillo,
+capaz de entender a los niños y a los burros, ha envuelto la visión
+plateada del asnillo en la aureola melancólica de su alma piadosa y
+sensitiva.
+
+Pero el alma del poeta penetra en tal forma la figura real del
+borriquillo que nos es difícil entender que sean dos personas distintas,
+y se nos antoja que Platero no es otro que el poeta mismo, la expresión
+poética de lo ingenuo, puro, infantil, irracional e instintivo de su
+alma. Cuando Juan Ramón razona con Platerillo nos parece que razona
+consigo mismo, y su coincidencia de sentimientos es tal y el amor que se
+tienen tan estrecho que no se podría pensar sino que Platero era un
+hermano de Juan Ramón que había tomado forma de asno, como en los
+cuentos, por arte de encantamiento. En todo caso, la hermandad entre un
+poeta y un animal, es decir, entre un poeta y la naturaleza, no es un
+insulto. Precisamente un hombre es un poeta cuando puede ser, espontánea
+y naturalmente, lo que es. Cosa muy difícil para los hombres.
+
+Juan Ramón Jiménez es un poeta verdadero, uno de los más puros que
+España ha tenido y tiene. Nació en 1881 en Moguer, muy cerca de Palos de
+Moguer, de donde hace más de cuatrocientos años salieron las carabelas
+castellanas que descubrieron a América. Moguer y su campiña se sienten
+en las páginas de _Platero y yo_ con un encanto único y singular. Por
+ellas podemos saber también algo de cómo Juan Ramón vivía de pequeño en
+aquella tierra andaluza, limpia, suave y clara, donde se formó su
+espíritu. La alta posición social de su familia le ahorró la dureza de
+la lucha por la vida y le permitió consagrarse por completo a su
+vocación artística. Aunque estudió en la Universidad de Sevilla, no le
+llamaba Dios por ese camino, y desde muy joven encontró en la poesía el
+desahogo de su alma exaltada y sensitiva. Cuando aún no tenía veinte
+años, su voz de timbre inconfundible fué escuchada en el mundo de habla
+española como la revelación de un gran temperamento poético original.
+Desde entonces Juan Ramón Jiménez ha vivido sólo para su arte,
+realizando el milagro, rara vez logrado por ningún artista, de la
+perfecta identificación entre la vida y la obra. Quiero decir con esto
+que su obra es la expresión fiel y sincera de su alma, que ningún
+esfuerzo ha sido ahorrado para lograr la mayor perfección e intensidad,
+que ninguna consideración fuera de este ideal artístico ha tenido cabida
+en el alma del poeta, el cual marcha, puro y abnegado como un santo, a
+la busca de su ideal sin concesión alguna a ningún otro interés humano.
+Ni ambición de dinero ni de fama pueden arrastrar a un poeta como éste a
+ceder a las demandas del gusto público y acostumbrado; nada le mueve
+fuera de la propia satisfacción.
+
+Ha sido siempre Juan Ramón Jiménez reconcentrado y solitario. Pero no se
+ha aislado de los hombres por falta de amor sino por exceso de
+sensibilidad. Su obra de juventud muestra bien claramente el tesoro de
+ternura que encerraba su alma enferma de ansia de amor no satisfecha, de
+melancólico disgusto por todo lo que es bajo en la vida. El poeta, que
+aún es joven, al llegar a la vîrilidad, con un hogar amoroso y
+tranquilo, rodeado de la amistad fervorosa de tantos admiradores
+selectos próximos y lejanos, parece haber entrado en una época de
+plenitud y serenidad.
+
+Hay que esperar aún mucho de él. Y sin embargo, considerando solamente
+su obra pasada, nos encontraríamos ante un poeta que no tiene superior
+en la literatura española de hoy y que indudablemente quedará en su
+historia como uno de sus grandes líricos de todos los tiempos. Hoy ya se
+le considera como un clásico: se le estudia, se le reedita, se le
+traduce. La _Hispanic Society of America_ ha reconocido el hecho de esta
+consagración mediante la publicación de un bello tomo de _Poesías
+escojidas_ por el autor mismo, magnífico homenaje de los Estados Unidos
+a la moderna poesía española.
+
+A pesar de todo esto Juan Ramón Jiménez no es un poeta popular, es
+decir, no es un poeta para todo el mundo. Es uno de esos poetas amados
+siempre por un público tan grande como sea el número de espíritus
+educados y selectos. No quiere esto decir que Juan Ramón Jiménez sea
+amanerado y difícil; al contrario, nadie más sencillo y puro. Entre
+tanto poeta como ahora cultiva el artificio del fondo y de la forma,
+Juan Ramón Jiménez, tan moderno como el que más, se distingue por la
+sencillez y la sinceridad. Al alarde de riqueza métrica que caracteriza
+a la revolución de la poesía española en los últimos treinta años, Juan
+Ramón Jiménez, aunque capaz de los mayores refinamientos técnicos,
+responde con el uso renovado y moderno de los metros tradicionales más
+sencillos y populares, y nadie como él ha sabido revivir los versos
+asonantados de los antiguos romances. Como Góngora y como Bécquer ha
+logrado mostrar hasta qué punto las formas más genuinas y tradicionales
+de la poesía española son susceptibles de renovación eterna y cómo puede
+encontrar expresión en ellas la sensibilidad de todos los tiempos y la
+originalidad individual de cada poeta. En un momento en que la poesía
+española ha sufrido las influencias más complejas extranjeras,
+principalmente francesas, las cuales se ven demasiado claras y
+dominantes en otros poetas, Juan Ramón Jiménez, a pesar de haberlas
+asimilado todas profundamente, se muestra siempre él y por lo tanto
+siempre español.
+
+Española--y española del sur, de la Andalucía melancólica y riente, que
+es una Castilla más suave y refinada, más amanerada y elegante--es la
+poesía de Juan Ramón Jiménez: andaluza es su tristeza nativa, su alegría
+dolorosa, su dejadez y abandono, su reconcentramiento altivo, su
+sobriedad de gesto y abundancia de expresión, su suprema distinción y
+elegancia inexplicables e inconfundibles. Y así este poeta
+aristocrático, que no habla nunca más que de lo más íntimo de su alma,
+crea una poesía que contiene en forma pura, selecta y personal todo lo
+que constituye el encanto único de la tierra andaluza donde vió el sol,
+una poesía llena de matices de color y de olores delicados e intensos,
+de flores y de jardines, de fuentes rumorosas en el misterio de las
+noches estrelladas, de muchachas soñadoras y pálidas, de pueblos
+dormidos, de paisajes dolientes, de soledad sonora y luminosa, de dulce
+y triste recogimiento interior.
+
+_Platero y yo_, aunque escrito en prosa, es un libro de la más pura
+poesía. Está escrito para los hombres y para los niños. Quizá no todos
+los hombres sean capaces de entenderlo, porque muchos de ellos al crecer
+llegan a cegar de los ojos del alma por donde entra la luz poética. Pero
+todos los niños tienen los ojos muy abiertos y ven muy bien lo que los
+hombres no pueden ver. Al menos para los muchachos de España _Platero y
+yo_ no tiene oscuridades ni secretos. Ojalá vosotros, muchachos y
+muchachas americanos, que estudiáis con entusiasmo la lengua española,
+podáis percibir también en estas páginas breves y vibrantes algo del
+encanto de aquella tierra misteriosa y lejana de donde salieron los
+primeros hombres blancos--de un blanco atezado y moreno como el de Juan
+Ramón--que llegaron a las costas maravillosas de América. Ojalá
+vosotros, nacidos en un país que puede enorgullecerse de ser aquél en
+que existe más amor y respeto por los animales--indicio seguro de la más
+alta y extendida cultura--elevéis aun más vuestro espíritu con la
+lectura de este librito tan puro en el que un gran poeta español,
+contándonos la historia de un asnillo risueño y humilde, ha vertido toda
+su ternura por los animales, los niños y la naturaleza.
+
+F. DE O.
+
+
+
+PLATERO Y YO
+
+POR
+
+JUAN RAMÓN JIMÉNEZ
+
+
+
+[Illustration: PLATERO Y YO]
+
+#I#
+
+#PLATERO#
+
+Platero es un burro pequeño, peludo, suave; tan blando por fuera, que se
+diría todo de algodón, que no lleva huesos. Sólo los espejos de azabache
+de sus ojos son duros cual[1] dos escarabajos de cristal negro.
+
+Lo dejo suelto, y se va al prado, y acaricia tibiamente con su hocico,
+rozándolas apenas, las florecillas rosas, celestes y gualdas.... Lo
+llamo dulcemente: "¿Platero?", y viene a mí con un trotecillo alegre que
+parece que se ríe, en no sé qué[2] cascabeleo[3] ideal....
+
+Come cuanto[4] le doy. Le gustan las naranjas mandarinas, las uvas
+moscateles, todas de ámbar, los higos morados, con su cristalina gotita
+de miel....
+
+Es tierno y mimoso igual que[5] un niño, que una niña ... pero fuerte y
+seco como de piedra. Cuando paso sobre él los domingos, por las últimas
+callejas[6] del pueblo, los hombres del campo, vestidos de limpio y
+despaciosos, se quedan mirándolo:
+
+--Tiene acero ...
+
+--Tiene acero. Acero y plata de luna[7], al mismo tiempo.
+
+[Footnote 1: #cual# = _como_.]
+
+[Footnote 2: #no sé qué# has an adjective force; translate by
+_inexplicable_.]
+
+[Footnote 3: #cascabeleo# refers to the jingling of the bells worn by
+mules and donkeys. It is used figuratively here to suggest the joyous
+eagerness with which Platero answers his master's call.]
+
+[Footnote 4: #cuanto# = _todo lo que_.]
+
+[Footnote 5: #igual que# = _como_.]
+
+[Footnote 6: #últimas callejas#; the streets in the outskirts of the
+town.]
+
+[Footnote 7: #Acero y plata de luna#; the word _acero_ suggests the
+strength and sturdiness of the donkey while _plata de luna_, used by the
+peasants instead of _azogue_ to mean 'quicksilver,' suggests his
+alertness and agility.]
+
+I. CUESTIONARIO
+
+1. ¿Quién es Platero?
+
+2. ¿Cómo es Platero?
+
+3. ¿Cómo son los ojos de Platero?
+
+4. ¿A dónde va el burro cuando su amo lo deja suelto?
+
+5. ¿Qué hace Platero en el prado?
+
+6. ¿Qué hace cuando su amo lo llama?
+
+7. ¿Qué le gusta comer?
+
+8. ¿De qué color son las naranjas?
+
+9. ¿De qué color son las uvas moscateles?
+
+10. ¿De qué color son los higos?
+
+11. ¿Por qué dice el amo de Platero que es igual que un niño?
+
+12. ¿Qué dicen de él los hombres del campo (_o_ los campesinos)?
+
+13. ¿Dónde encuentran los campesinos a Platero y a su amo?
+
+14. ¿Cómo se visten los campesinos los domingos?
+
+II. REPASO DE GRAMÁTICA
+
+_A_. Verbos de la primera conjugación.
+
+El verbo irregular _ir_.
+
+_Querer a_, to like, love (expresses emotion).
+
+_Gustar_, to like, please (used in speaking of inanimate things).
+
+_B_. Sustitúyanse los infinitivos de las expresiones siguientes por los
+tiempos simples de indicativo, sin cambiar las otras palabras:
+
+1. Los burros _irse_ al prado.
+
+2. Yo _dejarlo_ suelto.
+
+III. MODISMOS
+
+Escríbanse frases originales usando cada una de las locuciones
+siguientes:
+
+cuanto
+igual que
+todo lo que
+al mismo tiempo
+vestido de
+no sé qué + _substantivo_
+
+IV. TRADUCCIÓN
+
+_A_. Tradúzcanse al español las frases siguientes, usando en cada una la
+forma debida de _gustar_ o _querer_:
+
+1. Do you like oranges?
+
+2. I do not like oranges, but I like grapes.
+
+3. Platero likes his master.
+
+4. Platero likes to go to the meadow.
+
+5. The peasants like the donkey and they like to watch (_mirar_)[*] him
+eat.
+
+6. They like flowers, but he does not.
+
+7. Do you like to read about him?
+
+B. Tradúzcase al español:
+
+Platero is a little donkey. He is the color of silver and his eyes are
+as black as jet. He likes to go to the meadow, but when his master
+(_amo_) calls him, he goes to him at once.
+
+He eats oranges, grapes and figs. He is very gentle and strong at the
+same time. When his master rides him through the streets of the town,
+every one looks at him.
+
+[Footnote *: Words in parentheses () are to be used in the translation;
+words in brackets [] are to be omitted.]
+
+
+
+
+
+#II#
+
+#EL LOCO#
+
+Vestido de luto, con mi barba nazarena y mi breve sombrero negro, debo
+cobrar un extraño aspecto cabalgando en la blandura gris de Platero.
+
+[Illustration:]
+
+Cuando, yendo a las viñas, cruzo las últimas calles, blancas de cal con
+sol[1], los chiquillos gitanos, aceitosos y peludos, fuera de los
+harapos verdes, rojos y amarillos las tensas barrigas tostadas, corren
+detrás de nosotros, chillando largamente:--¡El loco! ¡El loco! ¡El
+loco! ... Delante está el campo, ya verde. Frente al cielo inmenso y
+puro, de un incendiado añil, mis ojos--¡tan lejos de mis oídos!--se
+abren noblemente, recibiendo en su calma esa placidez sin nombre, esa
+serenidad armoniosa y divina que vive en el sin fin[2] del horizonte....
+Y quedan, allá lejos, por las altas eras, unos agudos gritos, velados
+finamente, entrecortados, jadeantes, aburridos:
+
+--¡El lo ... co! ¡ El lo ... co!
+
+[Footnote 1: #blancas de cal con sol#; the sun shining on the
+lime-covered walls makes the streets seem remarkably white; the
+preposition _de_ frequently expresses cause.]
+
+[Footnote 2: #el sin fin#, _the infiniteness_.]
+
+I. CUESTIONARIO
+
+1. ¿Cómo va vestido el amo de Platero?
+
+2. ¿De qué color es el borrico?
+
+3. ¿Qué quiere decir _barba nazarena?_
+
+4. ¿A quiénes encuentran en las últimas calles del pueblo?
+
+5. ¿Dónde viven los gitanos?
+
+6. ¿En qué parte de España se encuentran muchos gitanos?
+
+7. ¿Cómo son los chiquillos gitanos (_o_ gitanillos)?
+
+8. ¿Qué le llaman al amo de Platero?
+
+9. ¿Por qué le llaman así?
+
+10. ¿A dónde va él?
+
+11. ¿Dónde quedan los gitanillos?
+
+II. REPASO DE GRAMÁTICA
+
+_A_. Verbos de la segunda y la tercera conjugaciones.
+
+    Los adjetivos de color.
+   _Vestir_, to dress.
+   _Vestirse_, to dress oneself.
+   _Estar vestido (de)_, to be dressed (in).
+
+_B_. Léanse las frases siguientes enteramente en español, usando la
+forma debida de _vestir_, _vestirse_ o _estar vestido (de)_:
+
+1. Los gitanillos _were dressed in_ harapos.
+
+2. Vamos a _dress ourselves_ ahora.
+
+3. La madre _is dressing_ a los niños.
+
+4. La gitanilla _dressed herself_ y salió.
+
+5. Yo _shall dress myself_ de negro.
+
+6. Yo _shall be dressed in_ verde.
+
+7. Los niños _were dressing themselves_.
+
+8. El amo de Platero _was dressed in_ luto.
+
+III. MODISMOS
+
+Úsese en frases originales cada uno de los adjetivos de color que
+siguen:
+
+negro
+verde
+gris
+rojo
+blanco
+amarillo
+
+IV. TRADUCCIÓN
+
+Tradúzcase al español:
+
+Platero's master dresses in mourning. He presents a strange appearance
+in (_con_) his small black hat. As he rides the donkey to the vineyards,
+the little gypsies run after him and call him "the crazy man." The gypsy
+children look picturesque (_pintoresco_) in their green, red, and
+yellow rags.
+
+
+
+#III#
+
+#JUEGOS DEL ANOCHECER#
+
+Cuando, en el crepúsculo del pueblo, Platero y yo entramos, ateridos,
+por la obscuridad morada de la calleja miserable que da al río seco, los
+niños pobres juegan a asustarse[1], fingiéndose mendigos. Uno se echa un
+saco a la cabeza, otro dice que no ve, otro se hace el cojo....
+
+Después, en ese brusco cambiar[2] de la infancia, como llevan unos
+zapatos y un vestido, y como sus madres, ellas sabrán cómo[3], les han
+dado algo de comer, se creen unos príncipes[4]:
+
+--Mi padre tiene un reloj de plata.
+
+--Y el mío un caballo.
+
+--Y el mío una escopeta.
+
+Reloj que levantará a la madrugada, escopeta que no matará el hambre,
+caballo que llevará a la miseria....
+
+El corro, luego. Entre tanta negrura, una niña, con voz débil, hilo de
+cristal acuoso en la sombra, canta entonadamente, cual una princesa:
+
+Yo soy la viudita
+Del Conde de Oré....[5]
+
+... ¡Sí, sí! ¡Cantad, soñad, niños pobres! Pronto, al amanecer vuestra
+adolescencia, la primavera os asustará, como un mendigo, enmascarada
+de invierno.
+
+--Vamos, Platero....
+
+[Footnote 1: #juegan a asustarse#, _play bogy man_.]
+
+[Footnote 2: #cambiar#, _changeableness_; the word refers to the
+vacillating imaginations of the children.]
+
+[Footnote 3: #ellas sabrán cómo#, _probably they alone know how_. The
+future is used in place of the present to denote conjecture or
+probability. Similar cases occur a few lines below, _levantará, matará_
+and _llevará_. See also Repaso de Gramática in Chapter V.]
+
+[Footnote 4: #se creen unos príncipes#, _they imagine that they are
+princes_.]
+
+[Footnote 5: #La Viudita#, a popular folk song of Spain.]
+
+I. CUESTIONARIO
+
+Fórmense por los alumnos diez preguntas en español basadas sobre _Juegos
+del anochecer_ y contéstese a ellas por escrito.
+
+II. REPASO DE GRAMÁTICA
+
+_A._ El imperfecto y pretérito de indicativo.
+
+_B._ Léase el primer párrafo de este cuento en voz alta haciendo los
+cambios necesarios para decirlo todo en tiempo pasado.
+
+_C._ Cambíense los infinitivos que van en letras bastardillas en el
+imperfecto o pretérito según el sentido:
+
+1. Los niños _jugar_ cuando Platero _entrar_ en el pueblo.
+
+2. Unos _fingirse_ mendigos mientras otros _hacerse_ los cojos.
+
+3. Después, sus madres les _dar_ algo de comer.
+
+4. La calleja _ser_ miserable.
+
+5. Luego la niña _empezar_ a cantar.
+
+6. _Saber_ cantar muy bien.
+
+7. Después de comer, los niños _acostarse_.
+
+8. Mi padre _tener_ un buen caballo.
+
+9. Lo _vender_ el año pasado.
+
+10. Al ver a Platero, la niña _asustarse_.
+
+III. REDACCIÓN
+
+Escríbase un pequeño tema incluyendo las palabras siguientes:
+
+Al anochecer ---- los niños pobres ---- calleja miserable ---- jugar a
+asustarse ---- fingirse mendigos ---- echarse un saco a la cabeza ----
+hacerse el cojo.
+
+Las madres ---- dar algo de comer ---- creerse príncipes ---- reloj de
+plata ---- un caballo ---- una escopeta ----
+
+El corro ---- con voz débil ---- cantar entonadamente ---- la canción.
+
+
+
+#IV#
+
+#LA ESPINA#
+
+Entrando en la dehesa, Platero ha comenzado a cojear. Me he echado al
+suelo....
+
+--Pero, hombre, ¿qué te pasa[1]?
+
+Platero ha dejado la mano derecha un poco levantada, mostrando la
+ranilla, sin fuerza y sin peso, sin tocar casi con el casco la arena
+ardiente del camino.
+
+Con una solicitud mayor, sin duda, que la del viejo Darbón, su médico,
+le he doblado la mano y le he mirado la ranilla roja. Una espina larga y
+verde de naranjo sano, está clavada en ella como un redondo puñalillo de
+esmeralda. Estremecido del dolor de Platero, he tirado de la espina; y
+me lo he llevado[2] al pobre al arroyo de los lirios amarillos para que
+el agua corriente le lama, con su larga lengua pura, la heridilla.
+
+Después, hemos seguido hacia la mar blanca, yo delante, él detrás,
+cojeando todavía y dándome suaves topadas en la espalda....
+
+[Footnote 1: #Pero, hombre;# the word _hombre_ is commonly used in
+expressions of surprise or expostulation in addressing persons,
+regardless of age or sex. In all of these sketches Platero's master
+addresses him as he would a child, with affectionate concern and sincere
+sympathy,--#¿qué te pasa?# _What is the matter?_]
+
+[Footnote 2: #me lo he llevado;# _me_ is the dative of concern or
+interest and represents the person to whom the action is of special
+interest; _lo_ is the redundant use of the object pronoun.]
+
+I. CUESTIONARIO
+
+1. ¿Cuándo comenzó Platero a cojear?
+
+2. ¿Qué hizo su amo cuando lo notó?
+
+3. ¿Qué le preguntó a Platero?
+
+4. ¿Cómo dejó Platero la mano derecha?
+
+5. ¿Cómo se llamaba el médico de Platero?
+
+6. Después de echarse al suelo ¿qué hizo el amo?
+
+7. ¿Qué halló en la ranilla?
+
+8. ¿A qué se parecía la espina?
+
+9. ¿A dónde llevó su amo a Platero?
+
+10. ¿Para qué lo llevó allá?
+
+11. ¿Cómo siguieron hacia la mar?
+
+12. ¿Por qué no volvió el amo a montar?
+
+II. REPASO DE GRAMÁTICA
+
+_A._ La comparación de los adjetivos y de los adverbios.
+
+_Tan ... como, tanto ... como_
+
+_Más ... que, más ... de, más ... de lo (el, la, los, las) que_
+
+_Cuanto más ... tanto más_
+
+_B._ Empléese en frases originales el superlativo de los adjetivos y
+adverbios siguientes:
+
+grande
+largo
+pequeño
+puro
+viejo
+mucho
+
+_C._ Complétese la comparación:
+
+1. Platero es más inteligente ---- un caballo; pero no es ----
+inteligente ---- su amo.
+
+2. El médico es más simpático ---- cree Ud.
+
+3. Yo no he viajado tanto ---- Uds.
+
+4. El borrico cojea menos hoy ---- ayer.
+
+5. Cuanto más camina, ---- cojea.
+
+6. El hombre tiene tantos amigos ---- enemigos.
+
+7. Hemos leído más ---- ocho libros.
+
+8. No tengo más ---- cinco pesos.
+
+9. He escrito más cartas ---- he recibido.
+
+III. TRADUCCIÓN
+
+Tradúzcase al español:
+
+When Platero's master noticed (_notar_) that he was limping, he got off
+to see what was the matter with him. He bent back the right forefoot and
+saw that there was a thorn fastened in the frog. He pulled the thorn out
+and took the donkey to the brook to bathe (_bañar_) the wound in the
+clear water.
+
+
+
+#V#
+
+#EL NIÑO TONTO#
+
+Siempre que volvíamos por la calle de San José, estaba el niño tonto a
+la puerta de su casa, sentado en su sillita, mirando el pasar[1] de los
+otros. Era uno de esos pobres niños a quienes no llega nunca el don de
+la palabra ni el regalo de la gracia; niño alegre él[2] y triste de ver;
+todo para su madre, nada para los demás.
+
+Un día, cuando pasó por la calle blanca aquel mal viento negro[3], no
+estaba el niño en su puerta. Cantaba un pájaro en el solitario umbral, y
+yo me acordé de Curros, padre más que poeta, que, cuando se quedó sin su
+niño, le preguntó por él a la mariposa gallega[4]:
+
+Volvoreta d'aliñas douradas ...
+
+Ahora que viene la primavera, pienso en el niño tonto, que desde la
+calle de San José se fué al cielo. Estará sentado[5] en su sillita, al
+lado de las rosas, viendo con sus ojos, abiertos otra vez, el dorado
+pasar de los gloriosos.
+
+[Footnote 1: #el pasar;# when the infinitive is used as subject
+or predicate, it usually takes the definite article in the masculine
+singular.]
+
+[Footnote 2: #alegre él,# this redundant use of the pronoun is
+frequent in the popular language, for the purpose of emphasis.]
+
+[Footnote 3: #aquel mal viento negro# = _la muerte_.]
+
+[Footnote 4: #mariposa gallega# refers to the quotation from Curros
+Enríquez which follows and which is equivalent in Castilian to:
+_Mariposa de alitas doradas_.]
+
+[Footnote 5: #Estará sentado#; the future is frequently used in place
+of the present to express conjecture or probability; see Chapter
+III, note 3.]
+
+I. CUESTIONARIO
+
+1. ¿En qué calle vivía el niño tonto?
+
+2. ¿Dónde se sentaba el niño?
+
+3. ¿Qué miraba el niño?
+
+4. ¿Por qué era triste verle?
+
+5. Un día ¿qué pasó por la calle?
+
+6. ¿Qué quiere decir _aquel mal viento negro_?
+
+7. ¿A dónde se fué el niño?
+
+8. ¿Quién cantaba en el umbral?
+
+9. ¿Cuándo piensa el autor en el niño?
+
+10. ¿Dónde estará sentado el niño?
+
+II. REPASO DE GRAMÁTICA
+
+A. Verbos de la primera y la segunda conjugaciones que sufren cambios de
+raíz.
+
+Uso del futuro de indicativo para expresar probabilidad en tiempo
+presente.
+
+_Pensar + infinitivo,_ to intend.
+
+_Pensar de,_ to think of, have an opinion about.
+
+_Pensar en,_ to think of, meditate on.
+
+B. Escríbanse todas las formas irregulares de
+
+_volver, acordar_ y _pensar_
+
+C. Cambíense los infinitivos que van en bastardilla en el (1) futuro;
+(2) condicional, y después tradúzcanse las frases al inglés:
+
+1. ¿_Acordarse_ de mí mis amigos?
+
+2. Los niños _estar_ sentados en la puerta.
+
+3. _Ser_ triste ver a la niña.
+
+4. El poeta _pensar_ en la primavera.
+
+5. _Ser_ uno de esos pobres.
+
+6. ¿Qué _mirar_ los niños?
+
+7. ¿Qué hora _ser_?
+
+8. ¿Quién _ser_?
+
+9. Él _haber_ ido al campo.
+
+III. TRADUCCIÓN
+
+Tradúzcase al español:
+
+1. When do you intend to leave (_marcharse_)?
+
+2. I am thinking of the little child who used to live in San José
+Street.
+
+3. What do you think of that?
+
+4. Think of your friends during your trip.
+
+5. I intended to do that yesterday.
+
+6. What did your brother think of the book?
+
+IV. REDACCIÓN
+
+Escríbase un tema original incluyendo las palabras siguientes:
+
+Siempre que volvíamos ---- el niño tonto ---- estar sentado ---- a la
+puerta ---- mirar ----. Pobres niños ---- no llegar nunca ---- la
+palabra ---- triste de ver ----. Un día ---- pasar por la calle ---- no
+estar ---- cantar ---- un pájaro en el umbral. La primavera ---- pensar
+---- el niño tonto ---- al cielo.
+
+
+
+#VI#
+
+#EL CANARIO VUELA#
+
+Un día, el canario verde, no sé cómo ni por qué, voló de su jaula. Era
+un canario viejo, recuerdo triste de una muerta, al que yo no había dado
+libertad por miedo de que se muriera[1] de hambre o de frío, o de que se
+lo[2] comieran los gatos.
+
+Anduvo toda la mañana entre los granados del huerto, en el pino de la
+puerta, por las lilas. Los niños estuvieron, toda la mañana también,
+sentados en la galería, absortos en los breves vuelos del pajarillo
+amarillento. Libre, Platero, holgaba junto a los rosales, jugando con
+una mariposa.
+
+A la tarde, el canario se vino al tejado de la casa grande, y allí se
+quedó largo tiempo, latiendo en el suave sol que declinaba. De pronto, y
+sin saber nadie[3] cómo ni por qué, apareció en la jaula, otra
+vez alegre.
+
+¡Qué alborozo en el jardín! Los niños saltaban, tocando las palmas,
+arrebolados y rientes como auroras; Diana, loca, los seguía,
+ladrándole[4] a su propia y riente campanilla; Platero, contagiado,
+igual que un chivillo, hacía corvetas, giraba sobre sus patas, en un
+vals tosco, y poniéndose en las manos, daba coces al aire claro
+y tibio....
+
+[Footnote 1: #se muriera ... se comieran#, subjunctives in
+substantive clauses after _por miedo de que_, an expression of feeling
+or emotion.]
+
+[Footnote 2: #se lo#; another instance of the dative of interest
+combined with the redundant use of the object pronoun; see Chapter
+IV, note 2.]
+
+[Footnote 3: #nadie#, subject of _saber_.]
+
+[Footnote 4: #ladrándole#; _le_ refers to _campanilla_.]
+
+I. CUESTIONARIO
+
+1. ¿Qué hizo el canario un día?
+
+2. ¿Por qué no se le había dado libertad?
+
+3. ¿Qué hizo toda la mañana?
+
+4. ¿Dónde estaban los niños?
+
+5. ¿Qué miraban?
+
+6. ¿Qué hacía Platero?
+
+7. ¿Qué hizo el canario a la tarde?
+
+8. ¿Cuándo volvió a la jaula?
+
+9. Al ver esto ¿qué hacían los niños?
+
+10. ¿Qué hacía Diana?
+
+11. ¿Qué hacía Platero?
+
+II. REPASO DE GRAMÁTICA
+
+_A._ Verbos de la tercera conjugación que sufren cambios de raíz.
+
+_B._ Conjúguese en el presente y pretérito de indicativo:
+
+1. _Morir_ de hambre.
+
+2. _Seguir_ a los niños.
+
+III. MODISMOS
+
+_A._ Empléese en una frase original lo contrario de cada una de las
+palabras siguientes:
+
+viejo
+frío
+grande
+riente
+triste
+breve
+suave
+claro
+
+_B._ Empléense en frases breves las locuciones siguientes:
+
+a la tarde
+todo la mañana
+de pronto
+otra vez
+
+IV. TRADUCCIÓN
+
+Tradúzcase al español:
+
+The children had an old canary. They kept (_guardar_) it in a cage
+because it was afraid of the cats. One morning the canary flew out of
+its cage. It stayed in the garden a long time and the children watched
+it from the porch. Platero was also in the garden playing with a
+butterfly. In the afternoon the canary returned to the cage. The
+children clapped their hands with joy, and even Platero and Diana were
+glad to see the canary in its cage again.
+
+
+
+#VII#
+
+#EL ALJIBE#
+
+[Illustration] Míralo; está lleno de las últimas lluvias, Platero. No
+tiene eco, ni se ve, allá en su fondo, como cuando está bajo, el mirador
+con sol[1], joya policroma tras los cristales amarillos y azules de la
+montera[2].
+
+Tú no has bajado nunca al aljibe, Platero. Yo sí; bajé cuando lo
+vaciaron, hace años[3]. Mira; tiene una galería[4] larga, y luego un
+cuarto pequeñito. Cuando entré en él, la vela que llevaba se me apagó y
+una salamandra se me puso en la mano. Dos fríos terribles se cruzaron en
+mi pecho cual dos espadas que se cruzaran como dos fémures bajo una
+calavera.... Todo el pueblo está socavado de aljibes y galerías,
+Platero. El aljibe más grande es el del patio del Salto del Lobo, plaza
+de la ciudadela antigua del Castillo. El mejor es éste de mi casa que,
+como ves, tiene el brocal esculpido[5] en una pieza sola de mármol
+alabastrino. La galería de la Iglesia va hasta la viña de los Puntales y
+allí se abre al campo, junto al río. La que sale del Hospital nadie se
+ha atrevido a seguirla del todo, porque no acaba nunca....
+
+Recuerdo, cuando era niño, las noches largas de lluvia, en que me
+desvelaba el rumor sollozante del agua redonda que caía, de la azotea,
+en el aljibe. Luego, a la mañana, íbamos locos, a ver hasta dónde había
+llegado el agua. Cuando estaba hasta la boca, como está, ¡qué asombro,
+qué gritos, qué admiración!
+
+... Bueno, Platero. Y ahora voy a darte un cubo de esta agua pura y
+fresquita, el mismo cubo que se bebía de una vez Villegas[6], el pobre
+Villegas que tenía el cuerpo achicharrado ya del coñac y del
+aguardiente....
+
+[Footnote 1: #mirador con sol#; when the water in the cistern is low,
+the reflection of the sunny _mirador_ may be seen at the bottom.]
+
+[Footnote 2: #montera# refers to the glass roof with which many
+patios are covered.]
+
+[Footnote 3: #hace años#; _hace_ in time expressions, when the action
+is not continuous, may usually be translated by _ago_.]
+
+[Footnote 4: #galería#, _underground reservoir_.]
+
+[Footnote 5: #tiene el brocal esculpido#; the cisterns in the patios
+may be ornamental, hence the marble curbing.]
+
+[Footnote 6: #Villegas#, the name of a man, perhaps a well-known
+character in the town.]
+
+I. CUESTIONARIO
+
+1. ¿Por qué estaba lleno el aljibe?
+
+2. Cuando estaba bajo ¿qué se podía ver en el fondo?
+
+3. ¿Quién había bajado al aljibe?
+
+4. Al entrar en el aljibe ¿qué le sucedió?
+
+5. ¿Cómo era el aljibe?
+
+6. ¿Qué desvelaba a los niños a veces por las noches?
+
+7. ¿Qué hacían los niños por la mañana?
+
+8. Al ver el aljibe lleno de agua ¿qué hacían los niños?
+
+9. ¿Qué le dió su amo a Platero?
+
+II. REPASO DE GRAMÁTICA
+
+_A._ Verbos que sufren cambios de ortografía.
+
+Usos idiomáticos de _hacer_.
+
+_B._ Escríbanse todas las formas irregulares de
+
+_apagar, cruzar_ y _seguir_
+
+III. TRADUCCIÓN
+
+Tradúzcase al español:
+
+1. I arrived (_llegar_) two weeks ago.
+
+2. We have not seen your friends for two months.
+
+3. Have you been living here long?
+
+4. They have been here only a short time.
+
+5. We had been living here a long time when you came.
+
+6. We had not seen them for several years.
+
+7. Her friends left (_marcharse_) two weeks ago yesterday.
+
+IV. REDACCIÓN
+
+Úsense en una composición corta las palabras que siguen:
+
+Estar lleno de ---- bajar al fondo ---- vaciar ---- hace años. Entrar en
+él ---- llevar una vela ---- apagarse ---- una salamandra ---- ponerse
+en la mano. Recordar ---- las noches de lluvia ---- desvelar ---- el
+rumor del agua ---- caer de la azotea ----. A la mañana ---- ir a ver
+---- hasta dónde ---- llegar el agua. Ir a dar ---- un cubo de agua
+fresca. El mismo cubo ---- beber de una vez ---- el pobre Villegas.
+
+
+
+#VIII#
+
+#LA SANGUIJUELA#
+
+--Espera. ¿Qué es eso, Platero? ¿Qué tienes?
+
+Platero está echando sangre por la boca. Tose y va despacio, más cada
+vez[1]. Comprendo todo en un momento. Al pasar esta mañana por la fuente
+de Pinete, Platero estuvo bebiendo en ella. Y, aunque siempre bebe en lo
+más claro[2] y con los dientes cerrados, sin duda una sanguijuela se le
+ha agarrado a la lengua o al cielo de la boca....
+
+--Espera, hombre. Enseña....
+
+Le pido ayuda a Raposo[3], el aperador, que baja por allí del Almendral,
+y entre los dos intentamos abrirle a Platero la boca[4]. Pero la tiene
+como trabada con hormigón romano. Comprendo con pena que el pobre
+Platero es menos inteligente de lo que yo me figuro.... Raposo coge un
+rodrigón gordo, lo parte en cuatro y procura atravesarle un pedazo a
+Platero entre las quijadas.... No es fácil la empresa. Platero alza la
+cabeza al cenit levantándose sobre las patas, huye, se revuelve.... Por
+fin, en un momento sorprendido, el palo entra de lado en la boca de
+Platero. Raposo se sube en el burro y con las dos manos tira hacia atrás
+de los salientes del palo para que Platero no lo suelte[5].
+
+Sí, allá adentro tiene, llena y negra, la sanguijuela. Con dos
+sarmientos hechos tijera se la arranco.... Parece un costalillo de
+almagra o un pellejillo de vino tinto; y, contra el sol, es como el moco
+de un pavo irritado por un paño rojo. Para que no saque sangre a ningún
+burro más, la corto sobre el arroyo, que un momento tiñe de la sangre de
+Platero la espumela de un breve torbellino....
+
+[Footnote 1: #más cada vez#, _more and more_.]
+
+[Footnote 2: #lo más claro#; the neuter article is used before
+masculine adjectives having an abstract meaning.]
+
+[Footnote 3: #a Raposo#; verbal expressions of advantage (or
+disadvantage) require the dative of the person and the accusative of the
+thing; in English this relation is expressed by the prepositions _for_
+or _from_. Translate, _I asked R. for help,_ or _I asked help
+from him_.]
+
+[Footnote 4: #abrirle a Platero la boca#; the definite article takes
+the place of the possessive adjective modifying a noun which refers to
+parts of the body or articles of clothing when the noun is used as the
+object of a verb. The possessor is indicated by the dative of interest,
+_a Platero_.]
+
+[Footnote 5: #suelte#; subjunctive in an adverbial clause introduced
+by _para que_.]
+
+I. CUESTIONARIO
+
+1. ¿Qué le preguntó su amo a Platero?
+
+2. ¿Por qué se lo preguntó?
+
+3. Cuando estaba bebiendo agua en la fuente ¿qué le sucedió?
+
+4. ¿Cómo bebía siempre?
+
+5. ¿A quién pidió ayuda su amo?
+
+6. ¿Quién era Raposo?
+
+7. ¿Qué intentaron los dos hacer?
+
+8. ¿Por qué era difícil la empresa del palo?
+
+9. ¿Quién se subió en el burro?
+
+10. ¿Para qué se subió?
+
+11. Por fin ¿cómo le arrancó su amo la sanguijuela?
+
+12. ¿Qué hizo con la sanguijuela?
+
+13. ¿Para qué hizo eso?
+
+II. REPASO DE GRAMÁTICA
+
+_A._ Verbos que sufren cambios de ortografía.
+
+Las preposiciones _por_ y _para_.
+
+_B._ Escríbanse todas las formas irregulares de los verbos siguientes:
+
+_coger, arrancar_ y _parecer_
+
+_C._ En las frases siguientes llénense los espacios con _por_ o _para_
+según convenga:
+
+1. Platero y su amo pasaban ---- la fuente.
+
+2. Vamos ---- aquí.
+
+3. Los borricos estaban ---- partir.
+
+4. Se podía ver ---- su cara que estaba malo.
+
+5. El burro fué irritado ---- la sanguijuela.
+
+6. Han estado aquí ---- mucho tiempo.
+
+7. ---- la mañana van a pasear.
+
+8. Los hombres fueron ---- ayudarlos.
+
+9. ---- un borrico, Platero es muy inteligente.
+
+10. ---- estar cansado no quiere caminar.
+
+III. MODISMOS
+
+Úsense las locuciones siguientes en frases originales:
+
+pedir ayuda (a)
+por fin
+intentar
+al + _infinitivo_
+tratar de
+más cada vez
+sin duda
+
+IV. TRADUCCIÓN
+
+Tradúzcase al español:
+
+As Platero was passing the fountain, he stopped (_pararse_) to take a
+drink. Although he drank with his teeth closed, a leech fastened itself
+to his tongue. His master tried to open his mouth, but the donkey threw
+back his head, turned round and tried to run away. Finally, with two
+twigs his master took out the leech and threw (_tirar_) it into
+the brook.
+
+
+
+#IX#
+
+#LAS TRES VIEJAS#
+
+[Illustration] Súbete aquí en el vallado, Platero. Anda, vamos a dejar
+que pasen esas pobres viejas....
+
+Deben venir de la playa o de los montes. Mira. Una es ciega y las otras
+dos la traen por los brazos. Vendrán[1] a ver a don Luis, el médico, o
+al hospital. Mira qué despacito andan, qué cuido, qué mesura ponen las
+dos que ven en su acción. Parece que las tres temen a la misma muerte.
+¿Ves cómo adelantan las manos cual para detener el aire mismo, apartando
+peligros imaginarios, con mimo absurdo, hasta las más leves ramitas en
+flor, Platero?
+
+Que te caes[2], hombre.... Oye qué lamentables palabras van diciendo.
+Son gitanas. Mira sus trajes pintorescos, de lunares y volantes. ¿Ves?
+Van a cuerpo[3], no caída, a pesar de la edad, su esbeltez. Renegridas,
+sudorosas, sucias, perdidas en el polvo con sol del mediodía, aún una
+flaca hermosura recia las acompaña, como un recuerdo seco y duro....
+
+Míralas a las tres, Platero. ¡Con qué confianza llevan la vejez a la
+vida, penetradas por la primavera esta que hace florecer de amarillo el
+cardo en la vibrante dulzura de su hervoroso sol!
+
+[Footnote 1: #Vendrán#; future of probability or conjecture; Chapter
+III, note 3.]
+
+[Footnote 2: #Que te caes#; this is said as a kind of warning to one
+of the gypsies and may be freely translated, _Be careful or you
+will fall_.]
+
+[Footnote 3: #Van a cuerpo; ir a cuerpo# is equivalent to English _to
+go without a wrap or coat_.]
+
+I. CUESTIONARIO
+
+1. ¿A quiénes encontraron un día Platero y su amo?
+
+2. ¿De dónde venían las gitanas?
+
+3. ¿Por qué traían a una las otras dos?
+
+4. ¿Para qué iban al pueblo?
+
+5. ¿Cómo andaban?
+
+6. ¿Cómo se sabía que las viejas eran gitanas?
+
+7. ¿Cómo eran las gitanas?
+
+8. ¿Cómo eran sus trajes?
+
+9. ¿Por qué se creía que eran hermosas todavía?
+
+10. ¿En qué estación del año fué?
+
+II. REPASO DE GRAMÁTICA
+
+_A._ El modo imperativo.
+
+La concordancia de los adjetivos.
+
+_B._ Cámbiense las frases siguientes de la forma afirmativa a la
+negativa o viceversa:
+
+1. Mírelas Ud.
+2. Súbete aquí.
+3. No lo dejes allí.
+4. No nos vamos.
+5. Ven acá.
+6. Óyeme.
+7. Acompáñenos Ud.
+8. Llévatelo.
+9. Dejémoslos aquí.
+
+_C._ Exprésese afirmativamente y negativamente en el imperativo, usando
+_Ud._ como sujeto:
+
+1. _Irse_ a ver al médico.
+
+2. _Dejar_ que pasen las viejas.
+
+3. _Venir_ a verlos.
+
+4. _Decirme_ a dónde van.
+
+5. _Escribirnos_ una carta.
+
+6. _Traérmelos_.
+
+7. _Oírlas_ hablar.
+
+8. _Ponérselo_.
+
+_D._ Léanse en voz alta las frases siguientes usando la forma debida de
+los adjetivos que van en letra bastardilla:
+
+1. Las gitanas son _viejo_ y _sucio_.
+
+2. El médico y su hermana son _rico_.
+
+3. Voy a comprar un traje y un sombrero _nuevo_.
+
+4. El pan y la carne son _caro_.
+
+5. Las _pobre_ viejas vienen de los montes _lejano_.
+
+6. Una es _ciego_; todas tres son _renegrido_.
+
+7. Los lápices y las plumas son _nuevo_.
+
+8. Las flores y los árboles son _hermoso_.
+
+9. Luis y sus hermanos son _alto_.
+
+10. La primavera y el verano son _hermoso_.
+
+III. REDACCIÓN
+
+Escríbase un tema original incluyendo las palabras siguientes:
+
+Tres viejas gitanas ---- una ser ciego ---- traer por los brazos ----
+deben venir ---- a ver al médico ---- andar despacio ---- temer. Llevar
+trajes pintorescos ---- ir a cuerpo ---- a pesar de ---- esbelto.
+Renegrido ---- sucio ---- aún hermoso.
+
+
+
+#X#
+
+#LA CARRETILLA#
+
+En el arroyo grande, que la lluvia había dilatado hasta la viña, nos
+encontramos, atascada, una vieja carretilla, toda perdida bajo su carga
+de hierba y de naranjas. Una niña, rota y sucia, lloraba sobre una
+rueda, queriendo ayudar al borriquillo, más pequeño ¡ay! y más flaco
+que Platero.
+
+Y el borriquillo se destrozaba contra el viento, intentando,
+inútilmente, arrancar del fango la carreta, al grito sollozante de la
+chiquilla. Era vano su esfuerzo, como el de los niños valientes, como el
+vuelo de esas brisas cansadas del verano que se caen, en un desmayo,
+entre las flores.
+
+Acaricié a Platero y, como pude, lo enganché a la carretilla, delante
+del borrico miserable. Le obligué, entonces, con un cariñoso imperio, y
+Platero, de un tirón, sacó carretilla y rucio del atolladero, y les
+subió la cuesta.
+
+¡Qué sonreír el de la chiquilla[1]! Fué como si el sol de la tarde, que
+se rompía, al ponerse entre las nubes de agua, en amarillos cristales,
+le encendiese[2] una aurora tras sus tiznadas lágrimas.
+
+Con su llorosa alegría me ofreció dos escogidas naranjas, finas,
+pesadas, redondas. Las tomé, agradecido, y le dí una al borriquillo
+débil, como dulce consuelo; otra a Platero, como premio áureo.
+
+[Footnote 1: #¡Qué sonreír el de la chiquilla!# Literally, _What a
+smile that of the little girl!_ Translate by _How the little
+girl smiled!_]
+
+[Footnote 2: #encendiese#; imperfect subjunctive after _como si_ in
+an elliptical sentence, with a present condition contrary to fact.]
+
+I. CUESTIONARIO
+
+1. ¿Qué se encontraron Platero y su amo en el arroyo?
+
+2. ¿Por qué se había dilatado el arroyo?
+
+3. ¿Qué contenía la carretilla?
+
+4. ¿Por qué lloraba la niña?
+
+5. ¿Qué intentaba hacer?
+
+6. ¿Qué hacía el borriquillo?
+
+7. ¿Qué hizo el amo de Platero?
+
+8. ¿Sacó fácilmente la carretilla del arroyo?
+
+9. Al verlo ¿qué hizo la niña?
+
+10. ¿Qué ofreció la niña al amo?
+
+11. ¿A quiénes les dió el amo las naranjas?
+
+II. REPASO DE GRAMÁTICA
+
+_A._ Los diminutivos.
+
+Los verbos irregulares _querer_ y _sonreír_.
+
+_B._ Úsense en oraciones los diminutivos de las palabras siguientes:
+
+niña
+pequeña
+flor
+hijo
+viejo
+libro
+casa
+gitana
+silla
+nube
+caballo
+pobre
+
+_C._ Conjúguese en el presente y pretérito de indicativo:
+
+1. _Querer_ ayudar al borrico.
+
+2. _Sonreír_ al verlos.
+
+III. TRADUCCIÓN
+
+Tradúzcase al español:
+
+In the brook there was a little cart loaded with (_cargado de_) oranges.
+The poor little donkey could not pull it out of the mud. The little girl
+was crying, but she was trying to help the donkey.
+
+Platero's master hitched him to the cart and he pulled it up the slope.
+The little girl smiling with pleasure took two oranges and offered them
+to the gentleman. He took them gratefully and gave them to the two
+little donkeys.
+
+
+
+#XI#
+
+#EL PAN#
+
+Te he dicho, Platero, que el alma de Moguer es el vino, ¿verdad? No; el
+alma de Moguer es el pan. Moguer es igual que[1] un pan de trigo, blanco
+por dentro, como el migajón, y dorado en torno--¡oh sol moreno!--como
+la blanda corteza.
+
+A mediodía, cuando el sol quema más, el pueblo entero empieza a humear y
+a oler a pino y a pan calentito. A todo el pueblo se le abre la boca. Es
+como una gran boca que come un gran pan. El pan se entra en todo: en el
+aceite, en el gazpacho, en el queso y la uva, para dar sabor a beso, en
+el vino, en el caldo, en el jamón, en él mismo, pan con pan. También
+solo, como la esperanza, o con una ilusión....
+
+Los panaderos llegan trotando en sus caballos, se paran en cada puerta
+entornada, tocan las palmas y gritan: "¡El panadero_oo!_"... Se oye el
+duro ruido tierno de los cuarterones que, al caer en los canastos que[2]
+brazos desnudos levantan, chocan con los bollos, de las hogazas con las
+roscas....
+
+Y los niños pobres llaman, al punto, a las campanillas de las cancelas o
+a los picaportes de los portones, y lloran largamente hacia adentro: ¡Un
+poqu_iii_to de p_aaa_n!...
+
+
