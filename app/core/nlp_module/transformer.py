@@ -57,7 +57,7 @@ class RedFeedForward(nn.Module):
 
 # Encoder Layer
 class CapaEncoder(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff, dropout=0.2):
+    def __init__(self, d_model, num_heads, d_ff, dropout=0.1):
         super().__init__()
         self.att = AtencionMultiCabeza(d_model, num_heads)
         self.ff = RedFeedForward(d_model, d_ff)
@@ -72,7 +72,7 @@ class CapaEncoder(nn.Module):
 
 # Transformer completo con máscara triangular
 class Transformer(nn.Module):
-    def __init__(self, vocab_size, d_model=256, N=3, num_heads=8, d_ff=1024, max_len=250):
+    def __init__(self, vocab_size, d_model=128, N=2, num_heads=4, d_ff=512, max_len=200):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pe = CodificacionPosicional(d_model, max_len)

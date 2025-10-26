@@ -38,7 +38,7 @@ arte_chatbot/
 │   └── prompts/                    # Prompts textuales para entrenamiento cruzado
 │
 ├── models/                         # Modelos entrenados (.pt, .pkl)
-│   ├── transformer_model.pt
+│   ├── transformer_art_model.pth
 │   ├── diffusion_model.pt
 │   └── tokenizer.pkl
 │

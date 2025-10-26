@@ -18,6 +18,11 @@ checkpoint_every = 5
 # Rutas
 # ----------------------
 ruta_dataset = os.path.join(os.path.dirname(__file__), "../../../datasets/español/dataset_completo.txt")
+
+# Modelo local (el ya entrenado previamente en tu PC)
+ruta_modelo_local = os.path.join(os.path.dirname(__file__), "../../../models/transformer_art_model.pth")
+
+# Ruta donde se guardarán los nuevos checkpoints en Drive
 ruta_modelo_drive = "/content/drive/MyDrive/arte_chatbot/models/transformer_art_model.pth"
 os.makedirs(os.path.dirname(ruta_modelo_drive), exist_ok=True)
 
@@ -57,23 +62,22 @@ fases = [
 ]
 
 # ----------------------
-# Cargar checkpoint si existe
+# Cargar pesos iniciales desde el modelo local
 # ----------------------
 inicio_fase = 0
 inicio_epoch = 1
 optimizador = None
 
-if os.path.exists(ruta_modelo_drive):
-    print("Cargando checkpoint...")
-    checkpoint = torch.load(ruta_modelo_drive, map_location=device)
+if os.path.exists(ruta_modelo_local):
+    print("✅ Cargando modelo base local desde:", ruta_modelo_local)
+    checkpoint = torch.load(ruta_modelo_local, map_location=device)
     if isinstance(checkpoint, dict) and "modelo" in checkpoint:
-        modelo.load_state_dict(checkpoint["modelo"])
-        inicio_fase = checkpoint.get("fase", 0)
-        inicio_epoch = checkpoint.get("epoch", 1) + 1
-        print(f"Continuando desde fase {inicio_fase + 1}, epoch {inicio_epoch}")
+        modelo.load_state_dict(checkpoint["modelo"], strict=False)
     else:
-        modelo.load_state_dict(checkpoint)
-        print("Checkpoint cargado (solo pesos del modelo). Entrenamiento continuará desde fase 1.")
+        modelo.load_state_dict(checkpoint, strict=False)
+    print("Pesos cargados correctamente para continuar el entrenamiento.")
+else:
+    print("⚠️ No se encontró el modelo local. Entrenamiento desde cero.")
 
 # ----------------------
 # Entrenamiento por fases
@@ -105,7 +109,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 "epoch": epoch
             }
             torch.save(checkpoint_data, ruta_modelo_drive)
-            print(f"Checkpoint guardado después de epoch {epoch}")
+            print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")
 
     # Reiniciar contador de epoch para la siguiente fase
     inicio_epoch = 1
@@ -114,4 +118,4 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
 # Guardar modelo final
 # ----------------------
 torch.save({"modelo": modelo.state_dict()}, ruta_modelo_drive)
-print("Entrenamiento finalizado. Modelo guardado en Drive:", ruta_modelo_drive)
+print("✅ Entrenamiento finalizado. Modelo guardado en Drive:", ruta_modelo_drive)
