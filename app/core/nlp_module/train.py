@@ -61,14 +61,24 @@ fases = [
 # ----------------------
 inicio_fase = 0
 inicio_epoch = 1
+optimizador = None
+
 if os.path.exists(ruta_modelo_drive):
-    modelo.load_state_dict(torch.load(ruta_modelo_drive))
-    print("Checkpoint cargado, continuando entrenamiento...")
+    print("Cargando checkpoint...")
+    checkpoint = torch.load(ruta_modelo_drive, map_location=device)
+    if isinstance(checkpoint, dict) and "modelo" in checkpoint:
+        modelo.load_state_dict(checkpoint["modelo"])
+        inicio_fase = checkpoint.get("fase", 0)
+        inicio_epoch = checkpoint.get("epoch", 1) + 1
+        print(f"Continuando desde fase {inicio_fase + 1}, epoch {inicio_epoch}")
+    else:
+        modelo.load_state_dict(checkpoint)
+        print("Checkpoint cargado (solo pesos del modelo). Entrenamiento continuará desde fase 1.")
 
 # ----------------------
 # Entrenamiento por fases
 # ----------------------
-for i, fase in enumerate(fases):
+for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | lr={fase['lr']} | epochs={fase['epochs']} ---")
     optimizador = optim.Adam(modelo.parameters(), lr=fase["lr"])
     
@@ -85,15 +95,23 @@ for i, fase in enumerate(fases):
             perdida_total += perdida.item()
         
         print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} - Pérdida: {perdida_total:.4f}")
-        
+
+        # Guardar checkpoint cada N epochs
         if epoch % checkpoint_every == 0:
-            torch.save(modelo.state_dict(), ruta_modelo_drive)
+            checkpoint_data = {
+                "modelo": modelo.state_dict(),
+                "optimizador": optimizador.state_dict(),
+                "fase": i,
+                "epoch": epoch
+            }
+            torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"Checkpoint guardado después de epoch {epoch}")
-    
-    inicio_epoch = 1  # reset para la siguiente fase
+
+    # Reiniciar contador de epoch para la siguiente fase
+    inicio_epoch = 1
 
 # ----------------------
 # Guardar modelo final
 # ----------------------
-torch.save(modelo.state_dict(), ruta_modelo_drive)
+torch.save({"modelo": modelo.state_dict()}, ruta_modelo_drive)
 print("Entrenamiento finalizado. Modelo guardado en Drive:", ruta_modelo_drive)
