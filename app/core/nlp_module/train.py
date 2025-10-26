@@ -10,8 +10,8 @@ from transformer import Transformer
 # Configuración general
 # ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-seq_len = 100
-batch_size = 16
+seq_len = 50
+batch_size = 8
 checkpoint_every = 5
 
 # ----------------------
@@ -51,9 +51,9 @@ criterio = nn.CrossEntropyLoss()
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 50, "lr": 0.001},
-    {"epochs": 30, "lr": 0.0005},
-    {"epochs": 20, "lr": 0.0002},
+    {"epochs": 20, "lr": 0.001},
+    {"epochs": 20, "lr": 0.0005},
+    {"epochs": 10, "lr": 0.0002},
 ]
 
 # ----------------------
