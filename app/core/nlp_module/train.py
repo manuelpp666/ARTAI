@@ -79,6 +79,26 @@ if os.path.exists(ruta_modelo_local):
 else:
     print("⚠️ No se encontró el modelo local. Entrenamiento desde cero.")
 
+
+# ----------------------
+# Reanudar desde checkpoint si existe
+# ----------------------
+if os.path.exists(ruta_modelo_drive):
+    print("♻️ Reanudando entrenamiento desde checkpoint en Drive...")
+    checkpoint = torch.load(ruta_modelo_drive, map_location=device)
+    modelo.load_state_dict(checkpoint["modelo"])
+    
+    if "optimizador" in checkpoint:
+        optimizador = optim.Adam(modelo.parameters())  # inicializa
+        optimizador.load_state_dict(checkpoint["optimizador"])
+    
+    inicio_fase = checkpoint.get("fase", 0)
+    inicio_epoch = checkpoint.get("epoch", 1) + 1  # continúa siguiente epoch
+    
+    print(f"Reanudando desde fase {inicio_fase+1}, epoch {inicio_epoch}")
+else:
+    print("⚠️ No se encontró checkpoint en Drive. Entrenamiento desde cero.")
+
 # ----------------------
 # Entrenamiento por fases
 # ----------------------
