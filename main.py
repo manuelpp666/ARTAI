@@ -15,7 +15,9 @@ seq_len = 50
 
 # Inicializar y cargar modelo entrenado
 modelo = Transformer(vocab_size=vocab_size).to(device)
-modelo.load_state_dict(torch.load("models/transformer_art_model.pth", map_location=device))
+checkpoint = torch.load("models/transformer_art_model.pth", map_location=device)
+modelo.load_state_dict(checkpoint["modelo"])
+
 modelo.eval()
 print("Modelo Transformer cargado y listo.")
 
