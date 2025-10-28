@@ -71,33 +71,33 @@ optimizador = None
 # ----------------------
 # Reanudar desde checkpoint si existe
 # ----------------------
-if os.path.exists(ruta_modelo_local):
+# ----------------------
+# Reanudar desde checkpoint si existe
+# ----------------------
+if os.path.exists(ruta_modelo_drive):
+    print("✅ Cargando checkpoint previo desde Drive:", ruta_modelo_drive)
+    checkpoint = torch.load(ruta_modelo_drive, map_location=device)
+    modelo.load_state_dict(checkpoint["modelo"])
+    optimizador = optim.Adam(modelo.parameters(), lr=fases[checkpoint["fase"]]["lr"])
+    if "optimizador" in checkpoint:
+        optimizador.load_state_dict(checkpoint["optimizador"])
+    inicio_fase = checkpoint["fase"]
+    inicio_epoch = checkpoint["epoch"] + 1
+elif os.path.exists(ruta_modelo_local):
     print("✅ Cargando modelo base local desde:", ruta_modelo_local)
     checkpoint = torch.load(ruta_modelo_local, map_location=device)
-    
-    # Cargar estado del modelo español
-    if isinstance(checkpoint, dict) and "modelo" in checkpoint:
-        modelo_es_dict = checkpoint["modelo"]
-    else:
-        modelo_es_dict = checkpoint
+    modelo_es_dict = checkpoint["modelo"] if "modelo" in checkpoint else checkpoint
 
-    # ----------------------
     # Transfer learning de embeddings
-    # ----------------------
     with torch.no_grad():
-        # Obtener embeddings del modelo español
-        embedding_es = modelo_es_dict["embedding.weight"]  # shape (vocab_size, d_model_es)
-        d_old = embedding_es.shape[1]  # 128
-        d_new = modelo.embedding.weight.shape[1]  # 256
-
-        # Copiar dimensiones aprendidas
+        embedding_es = modelo_es_dict["embedding.weight"]
+        d_old = embedding_es.shape[1]
+        d_new = modelo.embedding.weight.shape[1]
         modelo.embedding.weight[:, :d_old] = embedding_es
-        # Inicializar el resto aleatoriamente
         nn.init.normal_(modelo.embedding.weight[:, d_old:], mean=0.0, std=0.02)
-
     print("✅ Embeddings inicializados desde modelo español (transfer learning)")
 else:
-    print("⚠️ No se encontró el modelo local. Entrenamiento desde cero.")
+    print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
 
 # ----------------------
 # Entrenamiento por fases
