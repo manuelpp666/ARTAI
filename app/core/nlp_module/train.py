@@ -83,6 +83,7 @@ if os.path.exists(ruta_modelo_drive):
         optimizador.load_state_dict(checkpoint["optimizador"])
     inicio_fase = checkpoint["fase"]
     inicio_epoch = checkpoint["epoch"] + 1
+    print(f"🔄 Reanudando entrenamiento desde Fase {inicio_fase+1}, Epoch {inicio_epoch}")
 elif os.path.exists(ruta_modelo_local):
     print("✅ Cargando modelo base local desde:", ruta_modelo_local)
     checkpoint = torch.load(ruta_modelo_local, map_location=device)
