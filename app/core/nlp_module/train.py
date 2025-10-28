@@ -17,7 +17,7 @@ checkpoint_every = 5
 # ----------------------
 # Rutas
 # ----------------------
-ruta_dataset = os.path.join(os.path.dirname(__file__), "../../../datasets/español/dataset_completo.txt")
+ruta_dataset = os.path.join(os.path.dirname(__file__), "../../../datasets/español/arte_traducido/dataset_completo.txt")
 
 # Modelo local (el ya entrenado previamente en tu PC)
 ruta_modelo_local = os.path.join(os.path.dirname(__file__), "../../../models/transformer_art_model.pth")
@@ -68,36 +68,36 @@ inicio_fase = 0
 inicio_epoch = 1
 optimizador = None
 
-if os.path.exists(ruta_modelo_local):
-    print("✅ Cargando modelo base local desde:", ruta_modelo_local)
-    checkpoint = torch.load(ruta_modelo_local, map_location=device)
-    if isinstance(checkpoint, dict) and "modelo" in checkpoint:
-        modelo.load_state_dict(checkpoint["modelo"], strict=False)
-    else:
-        modelo.load_state_dict(checkpoint, strict=False)
-    print("Pesos cargados correctamente para continuar el entrenamiento.")
-else:
-    print("⚠️ No se encontró el modelo local. Entrenamiento desde cero.")
-
-
 # ----------------------
 # Reanudar desde checkpoint si existe
 # ----------------------
-if os.path.exists(ruta_modelo_drive):
-    print("♻️ Reanudando entrenamiento desde checkpoint en Drive...")
-    checkpoint = torch.load(ruta_modelo_drive, map_location=device)
-    modelo.load_state_dict(checkpoint["modelo"])
+if os.path.exists(ruta_modelo_local):
+    print("✅ Cargando modelo base local desde:", ruta_modelo_local)
+    checkpoint = torch.load(ruta_modelo_local, map_location=device)
     
-    if "optimizador" in checkpoint:
-        optimizador = optim.Adam(modelo.parameters())  # inicializa
-        optimizador.load_state_dict(checkpoint["optimizador"])
-    
-    inicio_fase = checkpoint.get("fase", 0)
-    inicio_epoch = checkpoint.get("epoch", 1) + 1  # continúa siguiente epoch
-    
-    print(f"Reanudando desde fase {inicio_fase+1}, epoch {inicio_epoch}")
+    # Cargar estado del modelo español
+    if isinstance(checkpoint, dict) and "modelo" in checkpoint:
+        modelo_es_dict = checkpoint["modelo"]
+    else:
+        modelo_es_dict = checkpoint
+
+    # ----------------------
+    # Transfer learning de embeddings
+    # ----------------------
+    with torch.no_grad():
+        # Obtener embeddings del modelo español
+        embedding_es = modelo_es_dict["embedding.weight"]  # shape (vocab_size, d_model_es)
+        d_old = embedding_es.shape[1]  # 128
+        d_new = modelo.embedding.weight.shape[1]  # 256
+
+        # Copiar dimensiones aprendidas
+        modelo.embedding.weight[:, :d_old] = embedding_es
+        # Inicializar el resto aleatoriamente
+        nn.init.normal_(modelo.embedding.weight[:, d_old:], mean=0.0, std=0.02)
+
+    print("✅ Embeddings inicializados desde modelo español (transfer learning)")
 else:
-    print("⚠️ No se encontró checkpoint en Drive. Entrenamiento desde cero.")
+    print("⚠️ No se encontró el modelo local. Entrenamiento desde cero.")
 
 # ----------------------
 # Entrenamiento por fases
