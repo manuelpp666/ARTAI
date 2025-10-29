@@ -110,6 +110,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
         modelo.train()
         perdida_total = 0
+        num_batches = 0 
         for x_batch, y_batch in crear_batches(data, seq_len, batch_size, device):
             optimizador.zero_grad()
             salida = modelo(x_batch)
@@ -118,7 +119,10 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             torch.nn.utils.clip_grad_norm_(modelo.parameters(), max_norm=1.0)
             optimizador.step()
             perdida_total += perdida.item()
+            num_batches += 1
         
+        perdida_media = perdida_total / num_batches
+        print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} - Pérdida media: {perdida_media:.4f}")
         print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} - Pérdida: {perdida_total:.4f}")
 
         # Guardar checkpoint cada N epochs
