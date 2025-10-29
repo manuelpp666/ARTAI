@@ -3,6 +3,7 @@ import torch
 from app.core.nlp_module.transformer import Transformer
 from app.core.nlp_module.generator import generar_texto
 from app.core.nlp_module.preprocess import cargar_vocab
+from app.core.nlp_module.interpreter import detectar_intencion 
 
 # ---------------------------------------------------
 # CONFIGURACIÓN FLASK
@@ -46,19 +47,29 @@ def home():
 def chat():
     user_message = request.json.get("message", "")
 
-    # Generar texto coherente
-    respuesta_texto = generar_texto(
-        modelo=modelo,
-        texto_inicio=user_message,
-        longitud=200,        # puedes ajustarlo (100-300 suele ir bien)
-        temperatura=0.9,     # menor → más coherente, mayor → más creativo
-        seq_len=seq_len,
-        device=device,
-        stoi=stoi,
-        itos=itos
-    )
+    # 🔍 Detectar intención
+    tipo = detectar_intencion(user_message)
+    print(f"🎯 Intención detectada: {tipo}")
 
-    return jsonify({"text": respuesta_texto})
+    if tipo == "imagen":
+        # Aquí podrías llamar a tu generador de imágenes (si lo tienes)
+        respuesta = "🖼️ Detecté que deseas generar una imagen relacionada con arte."
+    elif tipo == "texto":
+        # Generar texto coherente
+        respuesta = generar_texto(
+            modelo=modelo,
+            texto_inicio=user_message,
+            longitud=200,        # puedes ajustarlo
+            temperatura=0.9,     # menor → más coherente, mayor → más creativo
+            seq_len=seq_len,
+            device=device,
+            stoi=stoi,
+            itos=itos
+        )
+    else:
+        respuesta = "🤖 No entendí bien tu intención. ¿Quieres que te explique algo o genere una imagen?"
+
+    return jsonify({"text": respuesta, "tipo": tipo})
 
 # ---------------------------------------------------
 # MAIN

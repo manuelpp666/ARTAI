@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
 from transformer import Transformer
+from app.core.nlp_module.generator import generar_texto
 
 # ----------------------
 # Configuración general
@@ -144,6 +145,18 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             }
             torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")
+            # Generar texto de prueba
+            ejemplo = generar_texto(
+                modelo=modelo,
+                texto_inicio="el arte",  # puedes cambiar la semilla
+                longitud=100,            # tokens a generar
+                temperatura=1.0,         # ajusta para más creatividad
+                seq_len=seq_len,
+                device=device,
+                stoi=stoi,
+                itos=itos
+            )
+            print(f"\n💬 Texto de prueba tras epoch {epoch}:\n{ejemplo}\n")
 
     # Reiniciar contador de epoch para la siguiente fase
     inicio_epoch = 1
