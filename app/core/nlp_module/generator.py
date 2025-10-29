@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
-from .transformer import Transformer
-from .preprocess import codificar, decodificar
+from app.core.nlp_module.transformer import Transformer
+from app.core.nlp_module.preprocess import codificar, decodificar
 
 def generar_texto(modelo: Transformer, texto_inicio: str, longitud=200, temperatura=1.2, seq_len=50, device='cpu', stoi=None, itos=None):
     """Genera texto autoregresivo usando el transformer."""
