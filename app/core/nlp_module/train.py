@@ -18,7 +18,7 @@ checkpoint_every = 2  # ✅ Guardar cada 2 epochs
 # Rutas
 # ----------------------
 ruta_dataset = os.path.join(os.path.dirname(__file__), "../../../datasets/español/arte_traducido/dataset_completo.txt")
-ruta_vocab = "models/vocab_art.pt"
+ruta_vocab = os.path.join(os.path.dirname(__file__),"../../../models/vocab_art.pt")
 ruta_modelo_local = os.path.join(os.path.dirname(__file__), "../../../models/transformer_art_model.pth")
 ruta_modelo_drive = "/content/drive/MyDrive/arte_chatbot/models/transformer_art_model.pth"
 os.makedirs(os.path.dirname(ruta_modelo_drive), exist_ok=True)
