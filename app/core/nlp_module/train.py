@@ -3,9 +3,9 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from app.core.nlp_module.preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
-from app.core.nlp_module.transformer import Transformer
-from app.core.nlp_module.generator import generar_texto
+from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
+from transformer import Transformer
+from generator import generar_texto
 
 # ----------------------
 # Configuración general
