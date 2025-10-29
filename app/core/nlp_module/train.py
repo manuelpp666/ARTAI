@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from preprocess import crear_batches, codificar
+from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
 from transformer import Transformer
 
 # ----------------------
@@ -12,17 +12,14 @@ from transformer import Transformer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 seq_len = 50
 batch_size = 8
-checkpoint_every = 5
+checkpoint_every = 2  # ✅ Guardar cada 2 epochs
 
 # ----------------------
 # Rutas
 # ----------------------
 ruta_dataset = os.path.join(os.path.dirname(__file__), "../../../datasets/español/arte_traducido/dataset_completo.txt")
-
-# Modelo local (el ya entrenado previamente en tu PC)
+ruta_vocab = "models/vocab_art.pt"
 ruta_modelo_local = os.path.join(os.path.dirname(__file__), "../../../models/transformer_art_model.pth")
-
-# Ruta donde se guardarán los nuevos checkpoints en Drive
 ruta_modelo_drive = "/content/drive/MyDrive/arte_chatbot/models/transformer_art_model.pth"
 os.makedirs(os.path.dirname(ruta_modelo_drive), exist_ok=True)
 
@@ -35,16 +32,22 @@ with open(ruta_dataset, "r", encoding="utf-8") as f:
 print(f"Dataset completo: {len(texto)} caracteres.")
 
 # ----------------------
+# Crear vocabulario dinámico
+# ----------------------
+chars, stoi, itos = construir_vocab(texto)
+guardar_vocab(stoi, itos, ruta_vocab)
+vocab_size = len(chars)
+print(f"✅ Vocabulario construido: {vocab_size} caracteres únicos")
+
+# ----------------------
 # Preparar datos
 # ----------------------
-data = [codificar(texto)]
+data = [codificar(texto, stoi)]
 total_len = len(data[0])
 ajuste = (total_len - 1) % seq_len
 if ajuste != 0:
     print(f"Recortando {ajuste} caracteres para que todas las secuencias tengan longitud {seq_len}")
     data[0] = data[0][:-ajuste]
-
-vocab_size = len(sorted(list("abcdefghijklmnopqrstuvwxyzáéíóúü ,.!?\n")))
 
 # ----------------------
 # Inicializar modelo y criterio
@@ -62,15 +65,12 @@ fases = [
 ]
 
 # ----------------------
-# Cargar pesos iniciales desde el modelo local
+# Cargar pesos iniciales
 # ----------------------
 inicio_fase = 0
 inicio_epoch = 1
 optimizador = None
 
-# ----------------------
-# Reanudar desde checkpoint si existe
-# ----------------------
 # ----------------------
 # Reanudar desde checkpoint si existe
 # ----------------------
@@ -89,14 +89,21 @@ elif os.path.exists(ruta_modelo_local):
     checkpoint = torch.load(ruta_modelo_local, map_location=device)
     modelo_es_dict = checkpoint["modelo"] if "modelo" in checkpoint else checkpoint
 
-    # Transfer learning de embeddings
+    # Transfer learning de embeddings con diferente vocab_size
     with torch.no_grad():
         embedding_es = modelo_es_dict["embedding.weight"]
-        d_old = embedding_es.shape[1]
-        d_new = modelo.embedding.weight.shape[1]
-        modelo.embedding.weight[:, :d_old] = embedding_es
-        nn.init.normal_(modelo.embedding.weight[:, d_old:], mean=0.0, std=0.02)
-    print("✅ Embeddings inicializados desde modelo español (transfer learning)")
+        vocab_antiguo = embedding_es.shape[0]
+        vocab_nuevo = modelo.embedding.weight.shape[0]
+
+        # Copiar los embeddings existentes (hasta donde se pueda)
+        min_vocab = min(vocab_antiguo, vocab_nuevo)
+        modelo.embedding.weight[:min_vocab] = embedding_es[:min_vocab]
+
+        # Inicializar los nuevos símbolos aleatoriamente
+        if vocab_nuevo > vocab_antiguo:
+            nn.init.normal_(modelo.embedding.weight[vocab_antiguo:], mean=0.0, std=0.02)
+
+    print(f"✅ Embeddings transferidos ({min_vocab} comunes, {vocab_nuevo - vocab_antiguo} nuevos inicializados)")
 else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
 
@@ -111,6 +118,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         modelo.train()
         perdida_total = 0
         num_batches = 0 
+        
         for x_batch, y_batch in crear_batches(data, seq_len, batch_size, device):
             optimizador.zero_grad()
             salida = modelo(x_batch)
@@ -123,9 +131,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         
         perdida_media = perdida_total / num_batches
         print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} - Pérdida media: {perdida_media:.4f}")
-        print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} - Pérdida: {perdida_total:.4f}")
 
-        # Guardar checkpoint cada N epochs
+        # 💾 Guardar checkpoint cada 2 epochs
         if epoch % checkpoint_every == 0:
             checkpoint_data = {
                 "modelo": modelo.state_dict(),
