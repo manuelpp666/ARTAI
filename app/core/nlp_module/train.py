@@ -131,6 +131,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         
         perdida_media = perdida_total / num_batches
         print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} - Pérdida media: {perdida_media:.4f}")
+        print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} - Pérdida: {perdida_total:.4f}")
+
 
         # 💾 Guardar checkpoint cada 2 epochs
         if epoch % checkpoint_every == 0:
