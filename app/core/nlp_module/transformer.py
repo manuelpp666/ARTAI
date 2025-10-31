@@ -72,7 +72,7 @@ class CapaEncoder(nn.Module):
 
 # Transformer completo con máscara triangular
 class Transformer(nn.Module):
-    def __init__(self, vocab_size, d_model=256, N=3, num_heads=8, d_ff=1024, max_len=250):
+    def __init__(self, vocab_size, d_model=192, N=3, num_heads=4, d_ff=768, max_len=192):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pe = CodificacionPosicional(d_model, max_len)

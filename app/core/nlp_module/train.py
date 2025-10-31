@@ -10,10 +10,15 @@ from transformer import Transformer
 from generator import generar_texto
 
 # ----------------------
+# 🔧 Ajustes de rendimiento GPU
+# ----------------------
+torch.backends.cudnn.benchmark = True
+torch.backends.cudnn.deterministic = False
+# ----------------------
 # Configuración general
 # ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-seq_len = 128               # ✅ Contexto mayor, ideal para textos largos
+seq_len = 192              # ✅ Contexto mayor, ideal para textos largos
 batch_size = 8
 accum_steps = 2             # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
