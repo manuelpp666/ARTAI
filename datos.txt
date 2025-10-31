@@ -1,6 +1,0 @@
-* Que se guarden conversaciones
-* Usar base de datos (a resolver pq es duda)
-* Primero se hará el entrenamiento del transformer pequeño
-* Luego se hara el modelo difuso para que genere imagenes
-
-*Ante todo usar métricas
