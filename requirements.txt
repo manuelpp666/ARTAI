@@ -1,4 +1,10 @@
 Flask
-numpy==1.26.5
+numpy
 pandas==2.1.1
 torch==2.1.0
+transformers
+diffusers
+accelerate
+datasets
+torchvision
+pillow
