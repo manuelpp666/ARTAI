@@ -15,6 +15,7 @@ from generator import generar_texto
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 seq_len = 128               # ✅ Contexto mayor, ideal para textos largos
 batch_size = 8
+accum_steps = 2             # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
 porc_validacion = 0.1       # ✅ 10% para validación
 
@@ -82,10 +83,10 @@ criterio = nn.CrossEntropyLoss()
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 15, "lr": 0.001},
-    {"epochs": 15, "lr": 0.0005},
-    {"epochs": 10, "lr": 0.0002},
-    {"epochs": 5,  "lr": 0.0001},
+    {"epochs": 10, "lr": 0.001},
+    {"epochs": 10, "lr": 0.0005},
+    {"epochs": 5,  "lr": 0.0002},
+    {"epochs": 3,  "lr": 0.0001},  # opcional
 ]
 
 # ----------------------
@@ -123,8 +124,9 @@ elif os.path.exists(ruta_modelo_local):
 else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
 
+
 # ----------------------
-# Entrenamiento por fases
+# Entrenamiento por fases con gradient accumulation y perplexity
 # ----------------------
 for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | lr={fase['lr']} | epochs={fase['epochs']} ---")
@@ -137,22 +139,20 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         accuracy_total = 0
         num_batches = 0
 
-        # ----------------------
-        # Entrenamiento
-        # ----------------------
-        for x_batch, y_batch in crear_batches(data_train, seq_len, batch_size, device):
-            optimizador.zero_grad()
+        for i_batch, (x_batch, y_batch) in enumerate(crear_batches(data_train, seq_len, batch_size, device)):
             salida = modelo(x_batch)
             perdida = criterio(salida.view(-1, vocab_size), y_batch.view(-1))
+            perdida = perdida / accum_steps
             perdida.backward()
-            torch.nn.utils.clip_grad_norm_(modelo.parameters(), 1.0)
-            optimizador.step()
 
-            # Calcular accuracy
+            if (i_batch + 1) % accum_steps == 0:
+                torch.nn.utils.clip_grad_norm_(modelo.parameters(), 1.0)
+                optimizador.step()
+                optimizador.zero_grad()
+
             pred = salida.argmax(dim=-1)
             acc = (pred == y_batch).float().mean().item()
-
-            perdida_total += perdida.item()
+            perdida_total += perdida.item() * accum_steps  # desnormalizar para promedio
             accuracy_total += acc
             num_batches += 1
 
@@ -179,10 +179,11 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
 
             perdida_val_media = perdida_val / num_batches_val
             accuracy_val_media = accuracy_val / num_batches_val
+            perplexity = torch.exp(torch.tensor(perdida_val_media))
 
         print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} | "
               f"Train: loss={perdida_media:.4f}, acc={accuracy_media:.4f} | "
-              f"Val: loss={perdida_val_media:.4f}, acc={accuracy_val_media:.4f}")
+              f"Val: loss={perdida_val_media:.4f}, acc={accuracy_val_media:.4f}, ppl={perplexity:.2f}")
 
         # ----------------------
         # Guardar checkpoint y texto de ejemplo
@@ -209,7 +210,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             )
             print(f"\n💬 Texto de prueba tras epoch {epoch}:\n{ejemplo}\n")
 
-    inicio_epoch = 1  # Reiniciar para siguiente fase
+    inicio_epoch = 1
 
 # ----------------------
 # Guardar modelo final
