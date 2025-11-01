@@ -51,20 +51,18 @@ def decodificar(indices, itos):
 # FUNCIÓN PARA CREAR BATCHES
 # -----------------------------
 def crear_batches(datos, longitud_seq, tamaño_batch, device='cpu'):
-    """Crea lotes tensoriales para el entrenamiento."""
+    """Crea lotes tensoriales para el entrenamiento a partir de una secuencia de enteros."""
     entradas, objetivos = [], []
-    for frase in datos:
-        for i in range(0, len(frase)-1, longitud_seq):
-            inp = frase[i:i+longitud_seq]
-            targ = frase[i+1:i+longitud_seq+1]
-            if len(inp) < longitud_seq:
-                inp += [0]*(longitud_seq-len(inp))
-                targ += [0]*(longitud_seq-len(targ))
-            entradas.append(inp)
-            objetivos.append(targ)
+    for i in range(0, len(datos) - longitud_seq - 1, longitud_seq):
+        inp = datos[i:i+longitud_seq]
+        targ = datos[i+1:i+longitud_seq+1]
+        entradas.append(inp)
+        objetivos.append(targ)
 
+    # Mezclamos todo para evitar correlación secuencial
     combinado = list(zip(entradas, objetivos))
     random.shuffle(combinado)
+
     for i in range(0, len(combinado), tamaño_batch):
         batch = combinado[i:i+tamaño_batch]
         x_batch = torch.tensor([b[0] for b in batch], dtype=torch.long, device=device)
