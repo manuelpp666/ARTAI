@@ -55,7 +55,7 @@ class AtencionMultiCabeza(nn.Module):
         scores = scores - scores.max(dim=-1, keepdim=True)[0]
 
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, -1e9)
+            scores = scores.masked_fill(mask == 0, -1e4)
 
         attn = F.softmax(scores, dim=-1)
         attn = torch.nan_to_num(attn, nan=0.0, posinf=0.0, neginf=0.0)  # limpia NaN/Inf
