@@ -39,7 +39,8 @@ class AtencionMultiCabeza(nn.Module):
 
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.d_k)
         if mask is not None:
-            scores = scores.masked_fill(mask==0, -1e9)
+            neg_inf = -1e9 if scores.dtype == torch.float32 else -1e4
+            scores = scores.masked_fill(mask == 0, neg_inf)
         attn = F.softmax(scores, dim=-1)
         out = torch.matmul(attn, v)
         out = out.transpose(1,2).contiguous().view(B, -1, self.num_heads*self.d_k)
