@@ -9,7 +9,7 @@ from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
 from transformer import Transformer
 from generator import generar_texto
 from torch import amp  # ✅ NUEVO: reemplaza torch.cuda.amp
-
+from torch.optim.lr_scheduler import OneCycleLR
 
 # ----------------------
 # 🔧 Ajustes de rendimiento GPU
@@ -62,16 +62,12 @@ print(f"Entrenamiento: {len(texto_train)} chars | Validación: {len(texto_val)} 
 # ----------------------
 # Crear vocabulario dinámico
 # ----------------------
-chars, stoi, itos = construir_vocab(texto)
+tokenizer, stoi, itos = construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=8000)
 guardar_vocab(stoi, itos, ruta_vocab)
-vocab_size = len(chars)
-print(f"✅ Vocabulario construido: {vocab_size} caracteres únicos")
+vocab_size = len(stoi)
 
-# ----------------------
-# Codificar datos
-# ----------------------
-data_train = codificar(texto_train, stoi)
-data_val = codificar(texto_val, stoi)
+data_train = codificar(texto_train, tokenizer)
+data_val = codificar(texto_val, tokenizer)
 
 for nombre, data in [("train", data_train), ("val", data_val)]:
     ajuste = (len(data) - 1) % seq_len
@@ -104,26 +100,44 @@ fases = [
 inicio_fase = 0
 inicio_epoch = 1
 optimizador = None
-global_step = 0
 
-def get_lr(step, warmup_steps=1000, base_lr=5e-4):
-    if step < warmup_steps:
-        return base_lr * step / warmup_steps
-    return base_lr * (0.5 ** ((step - warmup_steps) // 10000))
+
 
 if os.path.exists(ruta_modelo_drive):
     print("✅ Cargando checkpoint previo desde Drive:", ruta_modelo_drive)
     checkpoint = torch.load(ruta_modelo_drive, map_location=device)
     modelo.load_state_dict(checkpoint["modelo"])
-    optimizador = optim.Adam(modelo.parameters(), lr=fases[checkpoint["fase"]]["lr"])
+    optimizador = optim.AdamW(modelo.parameters(), lr=fases[checkpoint["fase"]]["lr"], weight_decay=0.01)
     if "optimizador" in checkpoint:
         optimizador.load_state_dict(checkpoint["optimizador"])
+    
+    # ⚡ Cargar scheduler
+    scheduler = OneCycleLR(
+        optimizador,
+        max_lr=fases[checkpoint["fase"]]["lr"],
+        steps_per_epoch=(len(data_train)-1)//(seq_len*batch_size*accum_steps),
+        epochs=fases[checkpoint["fase"]]["epochs"],
+        anneal_strategy='cos',
+        pct_start=0.1
+    )
+    scheduler.load_state_dict(checkpoint["scheduler"])
+
     inicio_fase = checkpoint["fase"]
     inicio_epoch = checkpoint["epoch"] + 1
-    global_step = checkpoint.get("global_step", 0)
     print(f"🔄 Reanudando desde Fase {inicio_fase+1}, Epoch {inicio_epoch}")
 else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
+    # Crear optimizador y scheduler desde cero
+    optimizador = optim.AdamW(modelo.parameters(), lr=fases[inicio_fase]["lr"], weight_decay=0.01)
+    steps_per_epoch = (len(data_train)-1)//(seq_len*batch_size*accum_steps)
+    scheduler = OneCycleLR(
+        optimizador,
+        max_lr=fases[inicio_fase]["lr"],
+        steps_per_epoch=steps_per_epoch,
+        epochs=fases[inicio_fase]["epochs"],
+        anneal_strategy='cos',
+        pct_start=0.1
+    )
 
 # ✅ NUEVO: versión moderna compatible con PyTorch ≥2.5
 scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
@@ -133,8 +147,18 @@ scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
 # ----------------------
 for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | lr={fase['lr']} | epochs={fase['epochs']} ---")
-    optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizador, T_0=10, T_mult=2, eta_min=fase["lr"] / 10)
+    
+    if inicio_epoch == 1 and (optimizador is None or i > inicio_fase):
+        optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
+        steps_per_epoch = (len(data_train) - 1) // (seq_len * batch_size * accum_steps)
+        scheduler = OneCycleLR(
+            optimizador,
+            max_lr=fase["lr"],
+            steps_per_epoch=steps_per_epoch,
+            epochs=fase["epochs"],
+            anneal_strategy='cos',
+            pct_start=0.1,
+        )
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
         modelo.train()
@@ -165,11 +189,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                     optimizador.step()
                     optimizador.zero_grad()
                 
-                for param_group in optimizador.param_groups:
-                    param_group["lr"] = get_lr(global_step)
-                global_step += 1
-                if global_step < 10:
-                 print(f"Warmup step {global_step}: lr={get_lr(global_step):.8f}")
+                scheduler.step()
 
             pred = salida.argmax(dim=-1)
             acc = (pred == y_batch).float().mean().item()
@@ -214,9 +234,9 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             checkpoint_data = {
                 "modelo": modelo.state_dict(),
                 "optimizador": optimizador.state_dict(),
+                "scheduler": scheduler.state_dict(),  # <-- guardar scheduler
                 "fase": i,
-                "epoch": epoch,
-                "global_step": global_step 
+                "epoch": epoch
             }
             torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")
@@ -228,8 +248,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 temperatura=0.9,
                 seq_len=seq_len,
                 device=device,
-                stoi=stoi,
-                itos=itos
+                tokenizer=tokenizer,   # <-- pasa el tokenizer completo
+                top_k=50
             )
             print(f"\n💬 Texto de prueba tras epoch {epoch}:\n{ejemplo}\n")
 

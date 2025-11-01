@@ -8,3 +8,4 @@ accelerate
 datasets
 torchvision
 pillow
+tokenizers
