@@ -1,5 +1,5 @@
 # ================================================================
-# preprocess.py — versión con tokenización BPE
+# preprocess.py — versión BPE optimizada para español
 # ================================================================
 import os
 import json
@@ -8,26 +8,40 @@ import torch
 from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders, processors
 
 # -----------------------------
-# ENTRENAR TOKENIZER BPE
+# ENTRENAR O CARGAR TOKENIZER BPE
 # -----------------------------
-def construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=8000):
+def construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=15000):
     """
-    Entrena un tokenizador BPE desde texto plano y devuelve stoi/itos compatibles.
+    Entrena un tokenizador BPE desde texto plano y devuelve tokenizer, stoi y itos.
     """
+    # Normalizar texto
+    texto = texto.replace("\u2026", "...")  # “…” -> ...
+    texto = texto.replace("\r\n", "\n")     # saltos de línea uniformes
+    texto = " " + texto                      # ✅ espacio inicial para ByteLevel
+    # texto = texto.lower()  # opcional: descomentar si quieres todo en minúscula
+
     if os.path.exists(ruta_vocab):
         tokenizer = Tokenizer.from_file(ruta_vocab)
         print(f"📚 Tokenizer BPE cargado desde {ruta_vocab}")
     else:
         print("🚀 Entrenando nuevo tokenizer BPE...")
         tokenizer = Tokenizer(models.BPE(unk_token="[UNK]"))
+
+        # Pre-tokenizer robusto para español
         tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=True)
         tokenizer.decoder = decoders.ByteLevel()
-        trainer = trainers.BpeTrainer(vocab_size=vocab_size, special_tokens=["[PAD]", "[UNK]", "[BOS]", "[EOS]"])
+        trainer = trainers.BpeTrainer(
+            vocab_size=vocab_size,
+            special_tokens=["[PAD]", "[UNK]", "[BOS]", "[EOS]"],
+            show_progress=True
+        )
+
         tokenizer.train_from_iterator([texto], trainer)
         tokenizer.post_processor = processors.ByteLevel(trim_offsets=True)
         tokenizer.save(ruta_vocab)
         print(f"✅ Tokenizer BPE entrenado y guardado en {ruta_vocab}")
 
+    # Crear mappings stoi / itos
     vocab = tokenizer.get_vocab()
     stoi = vocab
     itos = {i: s for s, i in vocab.items()}
@@ -55,10 +69,12 @@ def cargar_vocab(ruta_modelo):
 # CODIFICACIÓN / DECODIFICACIÓN
 # -----------------------------
 def codificar(texto, tokenizer):
+    texto = " " + texto  # ✅ agregar espacio inicial para codificación
     return tokenizer.encode(texto).ids
 
 def decodificar(indices, tokenizer):
-    return tokenizer.decode(indices)
+    texto = tokenizer.decode(indices)
+    return texto.lstrip()  # eliminar espacio inicial sobrante
 
 # -----------------------------
 # CREAR BATCHES

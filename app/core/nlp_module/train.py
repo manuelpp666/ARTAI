@@ -3,6 +3,7 @@
 # ================================================================
 import os
 import math
+import re
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -22,7 +23,7 @@ torch.backends.cudnn.deterministic = False
 # Configuración general
 # ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-seq_len = 192              # ✅ Contexto mayor, ideal para textos largos
+seq_len = 320             # ✅ Contexto mayor, ideal para textos largos
 batch_size = 8
 accum_steps = 2             # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
@@ -63,7 +64,12 @@ print(f"Entrenamiento: {len(texto_train)} chars | Validación: {len(texto_val)} 
 # ----------------------
 # Crear vocabulario dinámico
 # ----------------------
-tokenizer, stoi, itos = construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
+texto_limpio = re.sub(
+    r"[^a-zA-Z0-9áàâäãåæéèêëíìîïóòôöõøúùûüýÿñçßčšžÁÀÂÄÃÅÆÉÈÊËÍÌÎÏÓÒÔÖÕØÚÙÛÜÝŸÑÇČŠŽ\s\[\]\(\)\{\}\.,;:¡!¿?\-—'\"…]", 
+    ' ', 
+    texto
+)
+tokenizer, stoi, itos = construir_vocab(texto_limpio, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
 guardar_vocab(stoi, itos, ruta_vocab)
 vocab_size = len(stoi)
 
@@ -89,8 +95,8 @@ criterio = nn.CrossEntropyLoss()
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 10, "lr": 2.5e-4},
-    {"epochs": 10, "lr": 1.5e-4},
+    {"epochs": 12, "lr": 1.5e-4},
+    {"epochs": 10, "lr": 1e-4},
     {"epochs": 5,  "lr": 1e-4},
     {"epochs": 3,  "lr": 5e-5},
 ]
@@ -139,7 +145,7 @@ if os.path.exists(ruta_modelo_drive):
         steps_per_epoch=(len(data_train)-1)//(seq_len*batch_size*accum_steps),
         epochs=fases[checkpoint["fase"]]["epochs"],
         anneal_strategy='cos',
-        pct_start=0.1
+        pct_start=0.3
     )
     scheduler.load_state_dict(checkpoint["scheduler"])
 
@@ -157,7 +163,7 @@ else:
         steps_per_epoch=steps_per_epoch,
         epochs=fases[inicio_fase]["epochs"],
         anneal_strategy='cos',
-        pct_start=0.1
+        pct_start=0.3
     )
 
 # ✅ NUEVO: versión moderna compatible con PyTorch ≥2.5
@@ -180,7 +186,9 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             steps_per_epoch=steps_per_epoch,
             epochs=fase["epochs"],
             anneal_strategy='cos',
-            pct_start=0.1,
+            pct_start=0.3,
+            div_factor=10,  
+            final_div_factor=100
         )
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
@@ -211,6 +219,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                     torch.nn.utils.clip_grad_norm_(modelo.parameters(), 1.0)
                     optimizador.step()
                     optimizador.zero_grad()
+                
+                optimizador.zero_grad()
                 
                 if scheduler.last_epoch < scheduler.total_steps:
                     scheduler.step()
@@ -268,8 +278,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             ejemplo = generar_texto(
                 modelo=modelo,
                 texto_inicio="el arte",
-                longitud=120,
-                temperatura=0.95,
+                longitud=320,
+                temperatura=0.85,
                 seq_len=seq_len,
                 device=device,
                 tokenizer=tokenizer,   # <-- pasa el tokenizer completo
