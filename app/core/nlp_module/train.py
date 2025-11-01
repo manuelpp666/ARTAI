@@ -8,6 +8,8 @@ import torch.optim as optim
 from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
 from transformer import Transformer
 from generator import generar_texto
+from torch.cuda.amp import autocast, GradScaler
+
 
 # ----------------------
 # 🔧 Ajustes de rendimiento GPU
@@ -88,18 +90,23 @@ criterio = nn.CrossEntropyLoss()
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 10, "lr": 0.001},
-    {"epochs": 10, "lr": 0.0005},
-    {"epochs": 5,  "lr": 0.0002},
-    {"epochs": 3,  "lr": 0.0001},  # opcional
+    {"epochs": 10, "lr": 5e-4},  
+    {"epochs": 10, "lr": 3e-4},
+    {"epochs": 5,  "lr": 1e-4},
+    {"epochs": 3,  "lr": 5e-5},
 ]
-
 # ----------------------
 # Cargar pesos iniciales (transfer learning o reanudar)
 # ----------------------
 inicio_fase = 0
 inicio_epoch = 1
 optimizador = None
+
+global_step = 0
+def get_lr(step, warmup_steps=1000, base_lr=5e-4):
+    if step < warmup_steps:
+        return base_lr * step / warmup_steps
+    return base_lr * (0.5 ** ((step - warmup_steps) // 10000))
 
 if os.path.exists(ruta_modelo_drive):
     print("✅ Cargando checkpoint previo desde Drive:", ruta_modelo_drive)
@@ -110,32 +117,19 @@ if os.path.exists(ruta_modelo_drive):
         optimizador.load_state_dict(checkpoint["optimizador"])
     inicio_fase = checkpoint["fase"]
     inicio_epoch = checkpoint["epoch"] + 1
+    global_step = checkpoint.get("global_step", 0)
     print(f"🔄 Reanudando desde Fase {inicio_fase+1}, Epoch {inicio_epoch}")
-
-elif os.path.exists(ruta_modelo_local):
-    print("✅ Cargando modelo base local desde:", ruta_modelo_local)
-    checkpoint = torch.load(ruta_modelo_local, map_location=device)
-    modelo_es_dict = checkpoint["modelo"] if "modelo" in checkpoint else checkpoint
-
-    with torch.no_grad():
-        embedding_es = modelo_es_dict["embedding.weight"]
-        vocab_antiguo = embedding_es.shape[0]
-        vocab_nuevo = modelo.embedding.weight.shape[0]
-        min_vocab = min(vocab_antiguo, vocab_nuevo)
-        modelo.embedding.weight[:min_vocab] = embedding_es[:min_vocab]
-        if vocab_nuevo > vocab_antiguo:
-            nn.init.normal_(modelo.embedding.weight[min_vocab:], mean=0.0, std=0.02)
-    print(f"✅ Embeddings transferidos ({min_vocab} comunes, {vocab_nuevo - vocab_antiguo} nuevos inicializados).")
 else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
 
+scaler = GradScaler(device.type) if device.type == "cuda" else None
 
 # ----------------------
 # Entrenamiento por fases con gradient accumulation y perplexity
 # ----------------------
 for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | lr={fase['lr']} | epochs={fase['epochs']} ---")
-    optimizador = optim.Adam(modelo.parameters(), lr=fase["lr"])
+    optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizador, step_size=5, gamma=0.9)
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
@@ -145,15 +139,32 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         num_batches = 0
 
         for i_batch, (x_batch, y_batch) in enumerate(crear_batches(data_train, seq_len, batch_size, device)):
-            salida = modelo(x_batch)
-            perdida = criterio(salida.view(-1, vocab_size), y_batch.view(-1))
-            perdida = perdida / accum_steps
-            perdida.backward()
+            with autocast(device_type=device.type, dtype=torch.float16):
+                salida = modelo(x_batch)
+                perdida = criterio(salida.view(-1, vocab_size), y_batch.view(-1))
+                perdida = perdida / accum_steps
+
+                if scaler is not None:
+                    scaler.scale(perdida).backward()
+                else:
+                    perdida.backward()
 
             if (i_batch + 1) % accum_steps == 0:
-                torch.nn.utils.clip_grad_norm_(modelo.parameters(), 1.0)
-                optimizador.step()
-                optimizador.zero_grad()
+                if scaler is not None:
+                    scaler.unscale_(optimizador)
+                    torch.nn.utils.clip_grad_norm_(modelo.parameters(), 1.0)
+                    scaler.step(optimizador)
+                    scaler.update()
+                else:
+                    torch.nn.utils.clip_grad_norm_(modelo.parameters(), 1.0)
+                    optimizador.step()
+                    optimizador.zero_grad()
+                
+                for param_group in optimizador.param_groups:
+                        param_group["lr"] = get_lr(global_step)
+                global_step += 1
+
+            
 
             pred = salida.argmax(dim=-1)
             acc = (pred == y_batch).float().mean().item()
@@ -163,7 +174,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
 
         perdida_media = perdida_total / num_batches
         accuracy_media = accuracy_total / num_batches
-        scheduler.step()
+        
 
         # ----------------------
         # Validación
@@ -198,7 +209,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 "modelo": modelo.state_dict(),
                 "optimizador": optimizador.state_dict(),
                 "fase": i,
-                "epoch": epoch
+                "epoch": epoch,
+                "global_step": global_step 
             }
             torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")

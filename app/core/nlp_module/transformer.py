@@ -72,12 +72,21 @@ class CapaEncoder(nn.Module):
 
 # Transformer completo con máscara triangular
 class Transformer(nn.Module):
+     # Inicialización Xavier para pesos (mejor estabilidad desde cero)
     def __init__(self, vocab_size, d_model=256, N=3, num_heads=8, d_ff=1024, max_len=250):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pe = CodificacionPosicional(d_model, max_len)
         self.layers = nn.ModuleList([CapaEncoder(d_model, num_heads, d_ff) for _ in range(N)])
         self.out = nn.Linear(d_model, vocab_size)
+
+        # Inicialización Xavier para pesos (mejor estabilidad desde cero)
+        self._init_weights()
+
+    def _init_weights(self):
+        for name, param in self.named_parameters():
+            if param.dim() > 1:
+                nn.init.xavier_uniform_(param)
 
     def generar_mascara_subsecuente(self, sz):
         """Máscara triangular para no ver tokens futuros"""
