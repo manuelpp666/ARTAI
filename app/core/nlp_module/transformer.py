@@ -1,10 +1,15 @@
-# app/core/nlp_module/transformer.py
+# ================================================================
+# app/core/nlp_module/transformer_v3.py
+# Versión mejorada — arquitectura pre-norm + GELU + dropout estable
+# ================================================================
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
 
-# Positional Encoding
+# ------------------------------
+# Codificación Posicional
+# ------------------------------
 class CodificacionPosicional(nn.Module):
     def __init__(self, d_model, max_len=5000):
         super().__init__()
@@ -13,75 +18,90 @@ class CodificacionPosicional(nn.Module):
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(pos * div_term)
         pe[:, 1::2] = torch.cos(pos * div_term)
-        pe = pe.unsqueeze(0)  # shape (1, max_len, d_model)
-        self.register_buffer('pe', pe)
+        self.register_buffer('pe', pe.unsqueeze(0))  # (1, max_len, d_model)
 
     def forward(self, x):
         return x + self.pe[:, :x.size(1)]
 
-# Multi-Head Attention
+
+# ------------------------------
+# Multi-Head Attention mejorada
+# ------------------------------
 class AtencionMultiCabeza(nn.Module):
-    def __init__(self, d_model, num_heads):
+    def __init__(self, d_model, num_heads, dropout=0.1):
         super().__init__()
         assert d_model % num_heads == 0
         self.d_k = d_model // num_heads
         self.num_heads = num_heads
+
         self.linear_q = nn.Linear(d_model, d_model)
         self.linear_k = nn.Linear(d_model, d_model)
         self.linear_v = nn.Linear(d_model, d_model)
         self.linear_out = nn.Linear(d_model, d_model)
+        self.attn_dropout = nn.Dropout(dropout)
 
     def forward(self, q, k, v, mask=None):
         B = q.size(0)
-        q = self.linear_q(q).view(B, -1, self.num_heads, self.d_k).transpose(1,2)
-        k = self.linear_k(k).view(B, -1, self.num_heads, self.d_k).transpose(1,2)
-        v = self.linear_v(v).view(B, -1, self.num_heads, self.d_k).transpose(1,2)
+        q = self.linear_q(q).view(B, -1, self.num_heads, self.d_k).transpose(1, 2)
+        k = self.linear_k(k).view(B, -1, self.num_heads, self.d_k).transpose(1, 2)
+        v = self.linear_v(v).view(B, -1, self.num_heads, self.d_k).transpose(1, 2)
 
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.d_k)
         if mask is not None:
-            neg_inf = -1e9 if scores.dtype == torch.float32 else -1e4
-            scores = scores.masked_fill(mask == 0, neg_inf)
+            scores = scores.masked_fill(mask == 0, float('-inf'))
         attn = F.softmax(scores, dim=-1)
+        attn = self.attn_dropout(attn)
+
         out = torch.matmul(attn, v)
-        out = out.transpose(1,2).contiguous().view(B, -1, self.num_heads*self.d_k)
+        out = out.transpose(1, 2).contiguous().view(B, -1, self.num_heads * self.d_k)
         return self.linear_out(out)
 
-# FeedForward
+
+# ------------------------------
+# FeedForward con GELU + Dropout
+# ------------------------------
 class RedFeedForward(nn.Module):
-    def __init__(self, d_model, d_ff):
+    def __init__(self, d_model, d_ff, dropout=0.1):
         super().__init__()
         self.linear1 = nn.Linear(d_model, d_ff)
         self.linear2 = nn.Linear(d_ff, d_model)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        return self.linear2(F.relu(self.linear1(x)))
+        return self.linear2(self.dropout(F.gelu(self.linear1(x))))
 
-# Encoder Layer
+
+# ------------------------------
+# Capa Encoder (Pre-Norm)
+# ------------------------------
 class CapaEncoder(nn.Module):
     def __init__(self, d_model, num_heads, d_ff, dropout=0.2):
         super().__init__()
-        self.att = AtencionMultiCabeza(d_model, num_heads)
-        self.ff = RedFeedForward(d_model, d_ff)
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
+        self.att = AtencionMultiCabeza(d_model, num_heads, dropout)
+        self.ff = RedFeedForward(d_model, d_ff, dropout)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, mask=None):
-        x2 = self.norm1(x + self.dropout(self.att(x, x, x, mask)))
-        x3 = self.norm2(x2 + self.dropout(self.ff(x2)))
-        return x3
+        x = x + self.dropout(self.att(self.norm1(x), self.norm1(x), self.norm1(x), mask))
+        x = x + self.dropout(self.ff(self.norm2(x)))
+        return x
 
-# Transformer completo con máscara triangular
+
+# ------------------------------
+# Transformer completo
+# ------------------------------
 class Transformer(nn.Module):
-     # Inicialización Xavier para pesos (mejor estabilidad desde cero)
-    def __init__(self, vocab_size, d_model=256, N=3, num_heads=8, d_ff=1024, max_len=250):
+    def __init__(self, vocab_size, d_model=192, N=4, num_heads=6, d_ff=768, max_len=250, dropout=0.2):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pe = CodificacionPosicional(d_model, max_len)
-        self.layers = nn.ModuleList([CapaEncoder(d_model, num_heads, d_ff) for _ in range(N)])
+        self.emb_dropout = nn.Dropout(dropout)
+        self.layers = nn.ModuleList([CapaEncoder(d_model, num_heads, d_ff, dropout) for _ in range(N)])
+        self.norm_final = nn.LayerNorm(d_model)
         self.out = nn.Linear(d_model, vocab_size)
 
-        # Inicialización Xavier para pesos (mejor estabilidad desde cero)
         self._init_weights()
 
     def _init_weights(self):
@@ -90,14 +110,13 @@ class Transformer(nn.Module):
                 nn.init.xavier_uniform_(param)
 
     def generar_mascara_subsecuente(self, sz):
-        """Máscara triangular para no ver tokens futuros"""
-        mask = torch.triu(torch.ones(sz, sz), 1).bool()
-        return mask
+        """Máscara triangular (no ver tokens futuros)"""
+        return torch.triu(torch.ones(sz, sz), 1).bool()
 
     def forward(self, x):
         mask = self.generar_mascara_subsecuente(x.size(1)).to(x.device)
-        x = self.embedding(x)
-        x = self.pe(x)
+        x = self.emb_dropout(self.pe(self.embedding(x)))
         for capa in self.layers:
             x = capa(x, mask)
+        x = self.norm_final(x)
         return self.out(x)

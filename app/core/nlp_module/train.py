@@ -130,7 +130,7 @@ scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
 for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | lr={fase['lr']} | epochs={fase['epochs']} ---")
     optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizador, step_size=5, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizador, T_0=10, T_mult=2, eta_min=fase["lr"] / 10)
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
         modelo.train()
