@@ -33,7 +33,6 @@ porc_validacion = 0.1       # ✅ 10% para validación
 # Rutas
 # ----------------------
 ruta_dataset = os.path.join(os.path.dirname(__file__), "../../../datasets/español/arte_traducido/dataset_completo.txt")
-ruta_vocab = os.path.join(os.path.dirname(__file__), "../../../models/vocab_art.pt")
 ruta_modelo_local = os.path.join(os.path.dirname(__file__), "../../../models/transformer_art_model.pth")
 ruta_modelo_drive = "/content/drive/MyDrive/arte_chatbot/models/transformer_art_model.pth"
 os.makedirs(os.path.dirname(ruta_modelo_drive), exist_ok=True)
@@ -70,7 +69,7 @@ texto_limpio = re.sub(
     texto
 )
 tokenizer, stoi, itos = construir_vocab(texto_limpio, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
-guardar_vocab(stoi, itos, ruta_vocab)
+guardar_vocab(stoi, itos, "bpe_tokenizer.json")
 vocab_size = len(stoi)
 
 data_train = codificar(texto_train, tokenizer)
