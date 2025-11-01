@@ -196,10 +196,12 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             perdida_val_media = perdida_val / num_batches_val
             accuracy_val_media = accuracy_val / num_batches_val
             perplexity = torch.exp(torch.tensor(perdida_val_media))
-
+        lr_actual = optimizador.param_groups[0]["lr"]
+        
         print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} | "
               f"Train: loss={perdida_media:.4f}, acc={accuracy_media:.4f} | "
-              f"Val: loss={perdida_val_media:.4f}, acc={accuracy_val_media:.4f}, ppl={perplexity:.2f}")
+              f"Val: loss={perdida_val_media:.4f}, acc={accuracy_val_media:.4f}, ppl={perplexity:.2f} | "
+              f"LR={lr_actual:.6f}")
 
         # ----------------------
         # Guardar checkpoint y texto de ejemplo
