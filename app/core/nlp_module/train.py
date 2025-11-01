@@ -8,7 +8,7 @@ import torch.optim as optim
 from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
 from transformer import Transformer
 from generator import generar_texto
-from torch.cuda.amp import autocast, GradScaler
+from torch import amp  # ✅ NUEVO: reemplaza torch.cuda.amp
 
 
 # ----------------------
@@ -16,6 +16,7 @@ from torch.cuda.amp import autocast, GradScaler
 # ----------------------
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.deterministic = False
+
 # ----------------------
 # Configuración general
 # ----------------------
@@ -47,14 +48,12 @@ print(f"Dataset completo: {len(texto)} caracteres.")
 # División limpia entrenamiento / validación
 # ----------------------
 punto_corte = int(len(texto) * (1 - porc_validacion))
-
-# Buscar el último punto o salto de línea antes del corte
 pos_final = max(
     texto.rfind('.', 0, punto_corte),
     texto.rfind('\n', 0, punto_corte)
 )
 if pos_final == -1:
-    pos_final = punto_corte  # por si no encuentra nada (caso raro)
+    pos_final = punto_corte
 
 texto_train = texto[:pos_final]
 texto_val = texto[pos_final:]
@@ -74,7 +73,6 @@ print(f"✅ Vocabulario construido: {vocab_size} caracteres únicos")
 data_train = [codificar(texto_train, stoi)]
 data_val = [codificar(texto_val, stoi)]
 
-# Alinear longitudes a seq_len
 for data in (data_train, data_val):
     ajuste = (len(data[0]) - 1) % seq_len
     if ajuste != 0:
@@ -90,19 +88,20 @@ criterio = nn.CrossEntropyLoss()
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 10, "lr": 5e-4},  
+    {"epochs": 10, "lr": 5e-4},
     {"epochs": 10, "lr": 3e-4},
     {"epochs": 5,  "lr": 1e-4},
     {"epochs": 3,  "lr": 5e-5},
 ]
+
 # ----------------------
-# Cargar pesos iniciales (transfer learning o reanudar)
+# Cargar pesos iniciales
 # ----------------------
 inicio_fase = 0
 inicio_epoch = 1
 optimizador = None
-
 global_step = 0
+
 def get_lr(step, warmup_steps=1000, base_lr=5e-4):
     if step < warmup_steps:
         return base_lr * step / warmup_steps
@@ -122,10 +121,11 @@ if os.path.exists(ruta_modelo_drive):
 else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
 
-scaler = GradScaler(device.type) if device.type == "cuda" else None
+# ✅ NUEVO: versión moderna compatible con PyTorch ≥2.5
+scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
 
 # ----------------------
-# Entrenamiento por fases con gradient accumulation y perplexity
+# Entrenamiento
 # ----------------------
 for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | lr={fase['lr']} | epochs={fase['epochs']} ---")
@@ -139,7 +139,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         num_batches = 0
 
         for i_batch, (x_batch, y_batch) in enumerate(crear_batches(data_train, seq_len, batch_size, device)):
-            with autocast(device_type=device.type, dtype=torch.float16):
+            # ✅ NUEVO: autocast actualizado
+            with amp.autocast("cuda"):
                 salida = modelo(x_batch)
                 perdida = criterio(salida.view(-1, vocab_size), y_batch.view(-1))
                 perdida = perdida / accum_steps
@@ -161,20 +162,17 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                     optimizador.zero_grad()
                 
                 for param_group in optimizador.param_groups:
-                        param_group["lr"] = get_lr(global_step)
+                    param_group["lr"] = get_lr(global_step)
                 global_step += 1
-
-            
 
             pred = salida.argmax(dim=-1)
             acc = (pred == y_batch).float().mean().item()
-            perdida_total += perdida.item() * accum_steps  # desnormalizar para promedio
+            perdida_total += perdida.item() * accum_steps
             accuracy_total += acc
             num_batches += 1
 
         perdida_media = perdida_total / num_batches
         accuracy_media = accuracy_total / num_batches
-        
 
         # ----------------------
         # Validación
@@ -204,7 +202,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
               f"LR={lr_actual:.6f}")
 
         # ----------------------
-        # Guardar checkpoint y texto de ejemplo
+        # Checkpoint
         # ----------------------
         if epoch % checkpoint_every == 0:
             checkpoint_data = {
