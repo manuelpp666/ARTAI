@@ -32,6 +32,6 @@ def generar_texto(modelo, tokenizer, device, seed_text, max_length=200,
             next_token = sorted_idx.gather(-1, next_token)
 
             generados.append(next_token.item())
-            input_ids = torch.cat([input_ids, next_token.unsqueeze(0)], dim=1)
+            input_ids = torch.cat([input_ids, next_token], dim=1)
 
     return tokenizer.decode(generados)
