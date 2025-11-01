@@ -70,13 +70,17 @@ print(f"✅ Vocabulario construido: {vocab_size} caracteres únicos")
 # ----------------------
 # Codificar datos
 # ----------------------
-data_train = [codificar(texto_train, stoi)]
-data_val = [codificar(texto_val, stoi)]
+data_train = codificar(texto_train, stoi)
+data_val = codificar(texto_val, stoi)
 
-for data in (data_train, data_val):
-    ajuste = (len(data[0]) - 1) % seq_len
+for nombre, data in [("train", data_train), ("val", data_val)]:
+    ajuste = (len(data) - 1) % seq_len
     if ajuste != 0:
-        data[0] = data[0][:-ajuste]
+        data = data[:-ajuste]
+        if nombre == "train":
+            data_train = data
+        else:
+            data_val = data
 
 # ----------------------
 # Inicializar modelo y criterio
@@ -164,6 +168,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 for param_group in optimizador.param_groups:
                     param_group["lr"] = get_lr(global_step)
                 global_step += 1
+                if global_step < 10:
+                 print(f"Warmup step {global_step}: lr={get_lr(global_step):.8f}")
 
             pred = salida.argmax(dim=-1)
             acc = (pred == y_batch).float().mean().item()
