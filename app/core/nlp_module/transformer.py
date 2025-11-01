@@ -14,7 +14,7 @@ class CodificacionPosicional(nn.Module):
     def __init__(self, d_model, max_len=5000):
         super().__init__()
         pe = torch.zeros(max_len, d_model)
-        pos = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        pos = torch.arange(0, max_len, dtype=torch.float32).unsqueeze(1).clamp(max=1e4)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(pos * div_term)
         pe[:, 1::2] = torch.cos(pos * div_term)
@@ -46,15 +46,27 @@ class AtencionMultiCabeza(nn.Module):
         k = self.linear_k(k).view(B, -1, self.num_heads, self.d_k).transpose(1, 2)
         v = self.linear_v(v).view(B, -1, self.num_heads, self.d_k).transpose(1, 2)
 
+        # -------------------------
+        # 🔒 Atención estable numéricamente
+        # -------------------------
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.d_k)
+
+        # Evita valores infinitos por overflow
+        scores = scores - scores.max(dim=-1, keepdim=True)[0]
+
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, float('-inf'))
+            scores = scores.masked_fill(mask == 0, -1e9)
+
         attn = F.softmax(scores, dim=-1)
+        attn = torch.nan_to_num(attn, nan=0.0, posinf=0.0, neginf=0.0)  # limpia NaN/Inf
         attn = self.attn_dropout(attn)
 
         out = torch.matmul(attn, v)
         out = out.transpose(1, 2).contiguous().view(B, -1, self.num_heads * self.d_k)
-        return self.linear_out(out)
+
+        out = self.linear_out(out)
+        out = torch.nan_to_num(out, nan=0.0, posinf=1e4, neginf=-1e4)  # 🔒 salida limpia
+        return out
 
 
 # ------------------------------
@@ -115,6 +127,7 @@ class Transformer(nn.Module):
 
     def forward(self, x):
         mask = self.generar_mascara_subsecuente(x.size(1)).to(x.device)
+        mask = mask.unsqueeze(0).unsqueeze(0)  # (1, 1, seq_len, seq_len)
         x = self.emb_dropout(self.pe(self.embedding(x)))
         for capa in self.layers:
             x = capa(x, mask)
