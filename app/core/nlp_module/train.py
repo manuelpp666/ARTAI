@@ -63,7 +63,7 @@ print(f"Entrenamiento: {len(texto_train)} chars | Validación: {len(texto_val)} 
 # ----------------------
 # Crear vocabulario dinámico
 # ----------------------
-tokenizer, stoi, itos = construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=8000)
+tokenizer, stoi, itos = construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
 guardar_vocab(stoi, itos, ruta_vocab)
 vocab_size = len(stoi)
 
@@ -89,8 +89,8 @@ criterio = nn.CrossEntropyLoss()
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 10, "lr": 5e-4},
-    {"epochs": 10, "lr": 3e-4},
+    {"epochs": 10, "lr": 2.5e-4},
+    {"epochs": 10, "lr": 1.5e-4},
     {"epochs": 5,  "lr": 1e-4},
     {"epochs": 3,  "lr": 5e-5},
 ]
@@ -177,7 +177,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         scheduler = OneCycleLR(
             optimizador,
             max_lr=fase["lr"],
-            steps_per_epoch=num_batches_real // accum_steps,
+            steps_per_epoch=steps_per_epoch,
             epochs=fase["epochs"],
             anneal_strategy='cos',
             pct_start=0.1,
@@ -212,7 +212,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                     optimizador.step()
                     optimizador.zero_grad()
                 
-                scheduler.step()
+                if scheduler.last_epoch < scheduler.total_steps:
+                    scheduler.step()
 
             pred = salida.argmax(dim=-1)
             acc = (pred == y_batch).float().mean().item()
@@ -268,13 +269,13 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 modelo=modelo,
                 texto_inicio="el arte",
                 longitud=120,
-                temperatura=0.9,
+                temperatura=0.95,
                 seq_len=seq_len,
                 device=device,
                 tokenizer=tokenizer,   # <-- pasa el tokenizer completo
                 top_k=50
             )
-            print(f"\n💬 Texto de prueba tras epoch {epoch}:\n{ejemplo}\n")
+            
             metricas = evaluar_texto_generado(ejemplo)
             print(f"\n💬 Texto de prueba tras epoch {epoch}:\n{ejemplo}\n")
             print(f"📊 Métricas de texto: {metricas}\n")
