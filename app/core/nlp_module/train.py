@@ -7,11 +7,27 @@ import re
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
+from preprocess import construir_vocab, guardar_vocab, codificar, generar_batches
 from transformer import Transformer
 from generator import generar_texto
 from torch import amp  # ✅ NUEVO: reemplaza torch.cuda.amp
-from torch.optim.lr_scheduler import OneCycleLR
+from torch.optim.lr_scheduler import LambdaLR
+
+
+
+# -------------------------------------------------
+# 🔄 Scheduler corregido con warmup normalizado
+# -------------------------------------------------
+def make_lr_lambda(warmup_steps):
+    def lr_lambda(step):
+        step = max(1, step + 1)
+        if step <= warmup_steps:
+            # Aumenta linealmente de 0 → 1 durante el warmup
+            return float(step) / float(warmup_steps)
+        # Luego decae suavemente como step^-0.5, manteniendo continuidad
+        return (step ** -0.5) * (warmup_steps ** 0.5)
+    return lr_lambda
+
 
 # ----------------------
 # 🔧 Ajustes de rendimiento GPU
@@ -25,7 +41,7 @@ torch.backends.cudnn.deterministic = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 seq_len = 320             # ✅ Contexto mayor, ideal para textos largos
 batch_size = 8
-accum_steps = 2             # ✅ Gradient accumulation
+accum_steps = 4            # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
 porc_validacion = 0.1       # ✅ 10% para validación
 
@@ -42,66 +58,46 @@ os.makedirs(os.path.dirname(ruta_modelo_drive), exist_ok=True)
 # ----------------------
 print("Leyendo dataset en:", ruta_dataset)
 with open(ruta_dataset, "r", encoding="utf-8") as f:
-    texto = f.read()
-print(f"Dataset completo: {len(texto)} caracteres.")
+    lineas = f.readlines()
 
-# ----------------------
-# División limpia entrenamiento / validación
-# ----------------------
-punto_corte = int(len(texto) * (1 - porc_validacion))
-pos_final = max(
-    texto.rfind('.', 0, punto_corte),
-    texto.rfind('\n', 0, punto_corte)
-)
-if pos_final == -1:
-    pos_final = punto_corte
-
-texto_train = texto[:pos_final]
-texto_val = texto[pos_final:]
-print(f"Entrenamiento: {len(texto_train)} chars | Validación: {len(texto_val)} chars (corte limpio)")
+num_train_lines = int(len(lineas) * (1 - porc_validacion))
+lineas_train = lineas[:num_train_lines]
+lineas_val   = lineas[num_train_lines:]
+print(f"Entrenamiento: {len(lineas_train)} chars | Validación: {len(lineas_val)} chars (corte limpio)")
 
 # ----------------------
 # Crear vocabulario dinámico
 # ----------------------
-texto_limpio = re.sub(
-    r"[^a-zA-Z0-9áàâäãåæéèêëíìîïóòôöõøúùûüýÿñçßčšžÁÀÂÄÃÅÆÉÈÊËÍÌÎÏÓÒÔÖÕØÚÙÛÜÝŸÑÇČŠŽ\s\[\]\(\)\{\}\.,;:¡!¿?\-—'\"…]", 
-    ' ', 
-    texto
-)
-tokenizer, stoi, itos = construir_vocab(texto_limpio, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
+tokenizer, stoi, itos = construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
 guardar_vocab(stoi, itos, "bpe_tokenizer.json")
+if "SECCION" not in stoi:
+    raise ValueError("❌ Token especial 'SECCION' no encontrado en vocabulario.")
+token_seccion_id = stoi["SECCION"]
+print(f"✅ Token 'SECCION' ID: {token_seccion_id}")
 vocab_size = len(stoi)
 print(f"📘 Vocabulario con {vocab_size} tokens")
 
 # ----------------------
 # Codificar datasets
 # ----------------------
-data_train = codificar(texto_train, tokenizer)
-data_val = codificar(texto_val, tokenizer)
+data_train = generar_batches(lineas_train, tokenizer, seq_len, batch_size, token_seccion_id, device)
+data_val   = generar_batches(lineas_val, tokenizer, seq_len, batch_size, token_seccion_id, device)
 
-for nombre, data in [("train", data_train), ("val", data_val)]:
-    ajuste = (len(data) - 1) % seq_len
-    if ajuste != 0:
-        data = data[:-ajuste]
-        if nombre == "train":
-            data_train = data
-        else:
-            data_val = data
 
 # ----------------------
 # Inicializar modelo y criterio
 # ----------------------
 modelo = Transformer(vocab_size=vocab_size).to(device)
-criterio = nn.CrossEntropyLoss()
+criterio = nn.CrossEntropyLoss(label_smoothing=0.1)
 
 # ----------------------
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 12, "lr": 1.5e-4},
-    {"epochs": 10, "lr": 1e-4},
-    {"epochs": 5,  "lr": 1e-4},
-    {"epochs": 3,  "lr": 5e-5},
+    {"epochs": 4,  "lr": 2e-4},   # 🧩 Calentamiento rápido: aprendizaje base del vocabulario
+    {"epochs": 12, "lr": 8e-5},   # 🔁 Consolidación: mejora sintaxis y frecuencia
+    {"epochs": 8,  "lr": 5e-5},   # 🎨 Fine-tuning: coherencia y fluidez
+    {"epochs": 4,  "lr": 2e-5},   # 🧠 Ajuste final: equilibrio semántico y regularización
 ]
 
 # ----------------------
@@ -134,10 +130,21 @@ def evaluar_texto_generado(texto):
         "vocab": round(vocab_div, 3)
     }
 
+# ----------------------
+# Escalador AMP
+# ----------------------
+scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
+
 if os.path.exists(ruta_modelo_drive):
     print("✅ Cargando checkpoint previo desde Drive:", ruta_modelo_drive)
+    optimizador = optim.AdamW(modelo.parameters(), lr=1e-4, weight_decay=0.01)
+    scheduler = LambdaLR(optimizador, lr_lambda=make_lr_lambda(2000))
     checkpoint = torch.load(ruta_modelo_drive, map_location=device)
     modelo.load_state_dict(checkpoint["modelo"])
+    optimizador.load_state_dict(checkpoint["optimizador"])
+    scheduler.load_state_dict(checkpoint["scheduler"])
+    if scaler is not None and checkpoint.get("scaler") is not None:
+        scaler.load_state_dict(checkpoint["scaler"])
     inicio_fase = checkpoint["fase"]
     inicio_epoch = checkpoint["epoch"] + 1
     print(f"🔄 Reanudando desde Fase {inicio_fase+1}, Epoch {inicio_epoch}")
@@ -145,10 +152,7 @@ else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
 
 
-# ----------------------
-# Escalador AMP
-# ----------------------
-scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
+
 
 # ----------------------
 # Entrenamiento
@@ -157,19 +161,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | LR={fase['lr']} | Epochs={fase['epochs']} ---")
     
     optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
-        
-    num_batches = len(data_train) // (seq_len * batch_size)
-    steps_per_epoch = math.ceil(num_batches / accum_steps)
-    scheduler = OneCycleLR(
-        optimizador,
-        max_lr=fase["lr"],
-        steps_per_epoch=steps_per_epoch,
-        epochs=fase["epochs"],
-        anneal_strategy='cos',
-        pct_start=0.3,
-        div_factor=10,
-        final_div_factor=100
-    )
+    warmup_steps = 2500  # puedes ajustar 500–2000 según tu dataset
+    scheduler = LambdaLR(optimizador, lr_lambda=make_lr_lambda(warmup_steps))
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
         modelo.train()
@@ -177,8 +170,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         accuracy_total = 0
         num_batches = 0
 
-        for i_batch, (x_batch, y_batch) in enumerate(crear_batches(data_train, seq_len, batch_size, device)):
-            # ✅ NUEVO: autocast actualizado
+        train_gen = generar_batches(lineas_train, tokenizer, seq_len, batch_size, token_seccion_id, device)
+        for i_batch, (x_batch, y_batch) in enumerate(train_gen):            # ✅ NUEVO: autocast actualizado
             with amp.autocast("cuda"):
                 salida = modelo(x_batch)
                 perdida = criterio(salida.view(-1, vocab_size), y_batch.view(-1))
@@ -202,8 +195,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 
                 optimizador.zero_grad(set_to_none=True)
                 
-                if scheduler.last_epoch < scheduler.total_steps:
-                    scheduler.step()
+                
+                scheduler.step()
 
             pred = salida.argmax(dim=-1)
             acc = (pred == y_batch).float().mean().item()
@@ -222,7 +215,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             perdida_val = 0
             accuracy_val = 0
             num_batches_val = 0
-            for x_batch, y_batch in crear_batches(data_val, seq_len, batch_size, device):
+            val_gen = generar_batches(lineas_val, tokenizer, seq_len, batch_size, token_seccion_id, device)
+            for x_batch, y_batch in val_gen:
                 salida_val = modelo(x_batch)
                 perdida_batch = criterio(salida_val.view(-1, vocab_size), y_batch.view(-1)).item()
                 pred_val = salida_val.argmax(dim=-1)
@@ -250,7 +244,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 "optimizador": optimizador.state_dict(),
                 "scheduler": scheduler.state_dict(),  # <-- guardar scheduler
                 "fase": i,
-                "epoch": epoch
+                "epoch": epoch,
+                "scaler": scaler.state_dict() if scaler is not None else None,
             }
             torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")
@@ -259,11 +254,12 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 modelo=modelo,
                 tokenizer=tokenizer,
                 device=device,
-                seed_text="el arte",       # texto inicial
+                seed_text="Qué es el arte?",       # texto inicial
                 max_length=320,            # longitud de generación
-                top_p=0.9,                 # nucleus sampling
-                repetition_penalty=1.2,    # penalización de repetición
-                temperature=0.85           # suaviza la probabilidad
+                top_k=70,                  # top-k sampling
+                top_p=0.97,                 # nucleus sampling
+                temperature=0.85,           # suaviza la probabilidad
+                repetition_penalty=1.25     # penalización de repetición
             )
             
             metricas = evaluar_texto_generado(ejemplo)

@@ -1,5 +1,5 @@
 # ================================================================
-# preprocess.py — versión BPE optimizada para español
+# preprocess.py — versión BPE optimizada para español (streaming)
 # ================================================================
 import os
 import json
@@ -10,21 +10,16 @@ from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders, pr
 # -----------------------------
 # ENTRENAR O CARGAR TOKENIZER BPE
 # -----------------------------
-def construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=15000):
+def construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=15000, chunk_size=1024*1024):
     """
-    Entrena un tokenizador BPE desde texto plano y devuelve tokenizer, stoi y itos.
+    Entrena un tokenizador BPE desde un archivo de texto por streaming.
+    Devuelve tokenizer, stoi y itos.
     """
-    # Normalizar texto
-    texto = texto.replace("\u2026", "...")  # “…” -> ...
-    texto = texto.replace("\r\n", "\n")     # saltos de línea uniformes
-    texto = " " + texto                      # ✅ espacio inicial para ByteLevel
-    # texto = texto.lower()  # opcional: descomentar si quieres todo en minúscula
-
     if os.path.exists(ruta_vocab):
         tokenizer = Tokenizer.from_file(ruta_vocab)
         print(f"📚 Tokenizer BPE cargado desde {ruta_vocab}")
     else:
-        print("🚀 Entrenando nuevo tokenizer BPE...")
+        print("🚀 Entrenando nuevo tokenizer BPE por streaming...")
         tokenizer = Tokenizer(models.BPE(unk_token="[UNK]"))
 
         # Pre-tokenizer robusto para español
@@ -32,11 +27,20 @@ def construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=15000):
         tokenizer.decoder = decoders.ByteLevel()
         trainer = trainers.BpeTrainer(
             vocab_size=vocab_size,
-            special_tokens=["[PAD]", "[UNK]", "[BOS]", "[EOS]"],
+            special_tokens=["[PAD]", "[UNK]", "[BOS]", "[EOS]", "SECCION"],
             show_progress=True
         )
 
-        tokenizer.train_from_iterator([texto], trainer)
+        # Generador que devuelve trozos del dataset
+        def iter_texto(ruta_dataset, chunk_size=chunk_size):
+            with open(ruta_dataset, "r", encoding="utf-8") as f:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    yield chunk.replace("\u2026", "...").replace("\r\n", "\n")
+
+        tokenizer.train_from_iterator(iter_texto(ruta_dataset), trainer)
         tokenizer.post_processor = processors.ByteLevel(trim_offsets=True)
         tokenizer.save(ruta_vocab)
         print(f"✅ Tokenizer BPE entrenado y guardado en {ruta_vocab}")
@@ -77,21 +81,39 @@ def decodificar(indices, tokenizer):
     return texto.lstrip()  # eliminar espacio inicial sobrante
 
 # -----------------------------
-# CREAR BATCHES
+# GENERAR BATCHES POR STREAMING
 # -----------------------------
-def crear_batches(datos, longitud_seq, tamaño_batch, device='cpu'):
-    entradas, objetivos = [], []
-    for i in range(0, len(datos) - longitud_seq - 1, longitud_seq):
-        inp = datos[i:i+longitud_seq]
-        targ = datos[i+1:i+longitud_seq+1]
-        entradas.append(inp)
-        objetivos.append(targ)
+def generar_batches(input_data, tokenizer, seq_len, batch_size, token_seccion_id, device='cpu'):
+    """
+    Genera batches de forma dinámica por streaming.
+    input_data puede ser un path (str) o una lista de líneas
+    """
+    # Obtener líneas según tipo
+    if isinstance(input_data, str):
+        with open(input_data, "r", encoding="utf-8") as f:
+            lineas = f.readlines()
+    elif isinstance(input_data, list):
+        lineas = input_data
+    else:
+        raise TypeError("input_data debe ser str o list")
+    
+    buffer = []
+    batch_x, batch_y = [], []
 
-    combinado = list(zip(entradas, objetivos))
-    random.shuffle(combinado)
+    # Iterar sobre las líneas ya leídas
+    for linea in lineas:
+        buffer.extend(tokenizer.encode(" " + linea.strip()).ids)
+        
+        while len(buffer) >= seq_len + 1:
+            x = buffer[:seq_len]
+            y = buffer[1:seq_len+1]
+            buffer = buffer[seq_len:]
 
-    for i in range(0, len(combinado), tamaño_batch):
-        batch = combinado[i:i+tamaño_batch]
-        x_batch = torch.tensor([b[0] for b in batch], dtype=torch.long, device=device)
-        y_batch = torch.tensor([b[1] for b in batch], dtype=torch.long, device=device)
-        yield x_batch, y_batch
+            batch_x.append(x)
+            batch_y.append(y)
+
+            if len(batch_x) == batch_size:
+                x_tensor = torch.tensor(batch_x, dtype=torch.long, device=device)
+                y_tensor = torch.tensor(batch_y, dtype=torch.long, device=device)
+                yield x_tensor, y_tensor
+                batch_x, batch_y = [], []
