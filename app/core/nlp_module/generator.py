@@ -11,17 +11,23 @@ def sample_next_token(logits, top_k=50, top_p=0.9, temperature=0.7):
     if top_k > 0:
         top_k = min(top_k, probs.size(-1))
         values, indices = torch.topk(probs, top_k)
-        probs = torch.zeros_like(probs).scatter_(-1, indices, values)
+        mask = torch.zeros_like(probs)
+        mask.scatter_(-1, indices, 1.0)
+        probs = probs * mask
+        probs = probs / probs.sum(dim=-1, keepdim=True)
 
-    # Renormalizar
-    probs = probs / probs.sum()
-
-    # 🔹 top-p
+    # 🔹 top-p (nucleus sampling)
     sorted_probs, sorted_indices = torch.sort(probs, descending=True)
     cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-    sorted_probs[cumulative_probs > top_p] = 0
-    sorted_probs = sorted_probs / sorted_probs.sum()
+    sorted_probs[cumulative_probs > top_p] = 0.0
 
+    # ⚠️ Renormalización segura
+    total = sorted_probs.sum()
+    if total <= 0 or torch.isnan(total):
+        sorted_probs = F.softmax(logits / temperature, dim=-1)
+        sorted_indices = torch.arange(sorted_probs.size(-1), device=logits.device)
+
+    sorted_probs = sorted_probs / sorted_probs.sum()
     next_token = torch.multinomial(sorted_probs, 1)
     return sorted_indices.gather(-1, next_token)
 
