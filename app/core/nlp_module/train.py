@@ -11,7 +11,12 @@ from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
 from transformer import Transformer
 from generator import generar_texto
 from torch import amp  # ✅ NUEVO: reemplaza torch.cuda.amp
-from torch.optim.lr_scheduler import OneCycleLR
+from torch.optim.lr_scheduler import LambdaLR
+
+
+def lr_lambda(step):
+    warmup_steps = 4000
+    return min((step + 1) ** -0.5, (step + 1) * (warmup_steps ** -1.5))
 
 # ----------------------
 # 🔧 Ajustes de rendimiento GPU
@@ -70,6 +75,10 @@ texto_limpio = re.sub(
 )
 tokenizer, stoi, itos = construir_vocab(texto_limpio, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
 guardar_vocab(stoi, itos, "bpe_tokenizer.json")
+if "SECCION" not in stoi:
+    raise ValueError("❌ Token especial 'SECCION' no encontrado en vocabulario.")
+token_seccion_id = stoi["SECCION"]
+print(f"✅ Token 'SECCION' ID: {token_seccion_id}")
 vocab_size = len(stoi)
 print(f"📘 Vocabulario con {vocab_size} tokens")
 
@@ -92,7 +101,7 @@ for nombre, data in [("train", data_train), ("val", data_val)]:
 # Inicializar modelo y criterio
 # ----------------------
 modelo = Transformer(vocab_size=vocab_size).to(device)
-criterio = nn.CrossEntropyLoss()
+criterio = nn.CrossEntropyLoss(label_smoothing=0.1)
 
 # ----------------------
 # Definir fases de entrenamiento
@@ -157,19 +166,10 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | LR={fase['lr']} | Epochs={fase['epochs']} ---")
     
     optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
-        
+    scheduler = LambdaLR(optimizador, lr_lambda)    
     num_batches = len(data_train) // (seq_len * batch_size)
     steps_per_epoch = math.ceil(num_batches / accum_steps)
-    scheduler = OneCycleLR(
-        optimizador,
-        max_lr=fase["lr"],
-        steps_per_epoch=steps_per_epoch,
-        epochs=fase["epochs"],
-        anneal_strategy='cos',
-        pct_start=0.3,
-        div_factor=10,
-        final_div_factor=100
-    )
+    
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
         modelo.train()
@@ -177,7 +177,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         accuracy_total = 0
         num_batches = 0
 
-        for i_batch, (x_batch, y_batch) in enumerate(crear_batches(data_train, seq_len, batch_size, device)):
+        for i_batch, (x_batch, y_batch) in enumerate(crear_batches(data_train, seq_len, batch_size, token_seccion_id, device, porcentaje_seccion=0.5)):
             # ✅ NUEVO: autocast actualizado
             with amp.autocast("cuda"):
                 salida = modelo(x_batch)
@@ -202,8 +202,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 
                 optimizador.zero_grad(set_to_none=True)
                 
-                if scheduler.last_epoch < scheduler.total_steps:
-                    scheduler.step()
+                
+                scheduler.step()
 
             pred = salida.argmax(dim=-1)
             acc = (pred == y_batch).float().mean().item()
@@ -222,7 +222,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             perdida_val = 0
             accuracy_val = 0
             num_batches_val = 0
-            for x_batch, y_batch in crear_batches(data_val, seq_len, batch_size, device):
+            for x_batch, y_batch in crear_batches(data_val, seq_len, batch_size, token_seccion_id, device, porcentaje_seccion=0.5):
                 salida_val = modelo(x_batch)
                 perdida_batch = criterio(salida_val.view(-1, vocab_size), y_batch.view(-1)).item()
                 pred_val = salida_val.argmax(dim=-1)
@@ -259,11 +259,12 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 modelo=modelo,
                 tokenizer=tokenizer,
                 device=device,
-                seed_text="el arte",       # texto inicial
+                seed_text="Qué es el arte?",       # texto inicial
                 max_length=320,            # longitud de generación
+                top_k=50,                  # top-k sampling
                 top_p=0.9,                 # nucleus sampling
-                repetition_penalty=1.2,    # penalización de repetición
-                temperature=0.85           # suaviza la probabilidad
+                temperature=0.8,           # suaviza la probabilidad
+                repetition_penalty=1.2     # penalización de repetición
             )
             
             metricas = evaluar_texto_generado(ejemplo)

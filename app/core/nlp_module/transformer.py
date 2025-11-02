@@ -28,7 +28,7 @@ class CodificacionPosicional(nn.Module):
 # Multi-Head Attention mejorada
 # ------------------------------
 class AtencionMultiCabeza(nn.Module):
-    def __init__(self, d_model, num_heads, dropout=0.1):
+    def __init__(self, d_model, num_heads, dropout=0.2):
         super().__init__()
         assert d_model % num_heads == 0
         self.d_k = d_model // num_heads
@@ -67,7 +67,7 @@ class AtencionMultiCabeza(nn.Module):
 # FeedForward con GELU + Dropout
 # ------------------------------
 class RedFeedForward(nn.Module):
-    def __init__(self, d_model, d_ff, dropout=0.15):
+    def __init__(self, d_model, d_ff, dropout=0.2):
         super().__init__()
         self.linear1 = nn.Linear(d_model, d_ff)
         self.linear2 = nn.Linear(d_ff, d_model)
@@ -81,7 +81,7 @@ class RedFeedForward(nn.Module):
 # Capa Encoder (Pre-Norm)
 # ------------------------------
 class CapaEncoder(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff, dropout=0.15):
+    def __init__(self, d_model, num_heads, d_ff, dropout=0.2):
         super().__init__()
         self.norm1 = nn.LayerNorm(d_model, eps=1e-5)
         self.norm2 = nn.LayerNorm(d_model, eps=1e-5)
@@ -104,7 +104,7 @@ class CapaEncoder(nn.Module):
 # Transformer completo
 # ------------------------------
 class Transformer(nn.Module):
-    def __init__(self, vocab_size, d_model=256, N=4, num_heads=8, d_ff=1024, max_len=512, dropout=0.15):
+    def __init__(self, vocab_size, d_model=256, N=4, num_heads=8, d_ff=1024, max_len=512, dropout=0.2):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pe = CodificacionPosicional(d_model, max_len)

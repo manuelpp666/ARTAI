@@ -32,7 +32,7 @@ def construir_vocab(texto, ruta_vocab="bpe_tokenizer.json", vocab_size=15000):
         tokenizer.decoder = decoders.ByteLevel()
         trainer = trainers.BpeTrainer(
             vocab_size=vocab_size,
-            special_tokens=["[PAD]", "[UNK]", "[BOS]", "[EOS]"],
+            special_tokens=["[PAD]", "[UNK]", "[BOS]", "[EOS]", "SECCION"],
             show_progress=True
         )
 
@@ -79,19 +79,39 @@ def decodificar(indices, tokenizer):
 # -----------------------------
 # CREAR BATCHES
 # -----------------------------
-def crear_batches(datos, longitud_seq, tamaño_batch, device='cpu'):
+def crear_batches(datos_codificados, seq_len, batch_size, token_seccion_id, device='cpu', porcentaje_seccion=0.5):
+    """
+    Genera batches mezclando secuencias que empiezan en SECCION y secuencias continuas.
+    - porcentaje_seccion: % de batches que empiezan en SECCION
+    """
     entradas, objetivos = [], []
-    for i in range(0, len(datos) - longitud_seq - 1, longitud_seq):
-        inp = datos[i:i+longitud_seq]
-        targ = datos[i+1:i+longitud_seq+1]
+
+    # 1️⃣ Secuencias que empiezan en SECCION
+    indices_seccion = [i for i, t in enumerate(datos_codificados) if t == token_seccion_id]
+    for idx in indices_seccion:
+        if idx + seq_len + 1 <= len(datos_codificados):
+            inp = datos_codificados[idx:idx+seq_len]
+            targ = datos_codificados[idx+1:idx+seq_len+1]
+            entradas.append(inp)
+            objetivos.append(targ)
+
+    # 2️⃣ Secuencias continuas aleatorias
+    num_seq_libres = int(len(entradas) * (1 - porcentaje_seccion) / max(porcentaje_seccion, 0.01))
+    max_start = len(datos_codificados) - seq_len - 1
+    for _ in range(num_seq_libres):
+        start = random.randint(0, max_start)
+        inp = datos_codificados[start:start+seq_len]
+        targ = datos_codificados[start+1:start+seq_len+1]
         entradas.append(inp)
         objetivos.append(targ)
 
+    # Mezclar
     combinado = list(zip(entradas, objetivos))
     random.shuffle(combinado)
 
-    for i in range(0, len(combinado), tamaño_batch):
-        batch = combinado[i:i+tamaño_batch]
+    # Crear batches
+    for i in range(0, len(combinado), batch_size):
+        batch = combinado[i:i+batch_size]
         x_batch = torch.tensor([b[0] for b in batch], dtype=torch.long, device=device)
         y_batch = torch.tensor([b[1] for b in batch], dtype=torch.long, device=device)
         yield x_batch, y_batch
