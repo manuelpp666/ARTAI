@@ -125,7 +125,6 @@ if os.path.exists(ruta_modelo_drive):
     modelo.load_state_dict(checkpoint["modelo"])
     inicio_fase = checkpoint["fase"]
     inicio_epoch = checkpoint["epoch"] + 1
-    tokenizer = checkpoint["tokenizer"]
     print(f"🔄 Reanudando desde Fase {inicio_fase+1}, Epoch {inicio_epoch}")
 else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
