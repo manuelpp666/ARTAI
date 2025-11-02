@@ -7,7 +7,7 @@ import re
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from preprocess import construir_vocab, guardar_vocab, codificar, crear_batches
+from preprocess import construir_vocab, guardar_vocab, codificar, generar_batches
 from transformer import Transformer
 from generator import generar_texto
 from torch import amp  # ✅ NUEVO: reemplaza torch.cuda.amp
@@ -47,33 +47,17 @@ os.makedirs(os.path.dirname(ruta_modelo_drive), exist_ok=True)
 # ----------------------
 print("Leyendo dataset en:", ruta_dataset)
 with open(ruta_dataset, "r", encoding="utf-8") as f:
-    texto = f.read()
-print(f"Dataset completo: {len(texto)} caracteres.")
+    lineas = f.readlines()
 
-# ----------------------
-# División limpia entrenamiento / validación
-# ----------------------
-punto_corte = int(len(texto) * (1 - porc_validacion))
-pos_final = max(
-    texto.rfind('.', 0, punto_corte),
-    texto.rfind('\n', 0, punto_corte)
-)
-if pos_final == -1:
-    pos_final = punto_corte
-
-texto_train = texto[:pos_final]
-texto_val = texto[pos_final:]
-print(f"Entrenamiento: {len(texto_train)} chars | Validación: {len(texto_val)} chars (corte limpio)")
+num_train_lines = int(len(lineas) * (1 - porc_validacion))
+lineas_train = lineas[:num_train_lines]
+lineas_val   = lineas[num_train_lines:]
+print(f"Entrenamiento: {len(lineas_train)} chars | Validación: {len(lineas_val)} chars (corte limpio)")
 
 # ----------------------
 # Crear vocabulario dinámico
 # ----------------------
-texto_limpio = re.sub(
-    r"[^a-zA-Z0-9áàâäãåæéèêëíìîïóòôöõøúùûüýÿñçßčšžÁÀÂÄÃÅÆÉÈÊËÍÌÎÏÓÒÔÖÕØÚÙÛÜÝŸÑÇČŠŽ\s\[\]\(\)\{\}\.,;:¡!¿?\-—'\"…]", 
-    ' ', 
-    texto
-)
-tokenizer, stoi, itos = construir_vocab(texto_limpio, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
+tokenizer, stoi, itos = construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=10000)
 guardar_vocab(stoi, itos, "bpe_tokenizer.json")
 if "SECCION" not in stoi:
     raise ValueError("❌ Token especial 'SECCION' no encontrado en vocabulario.")
@@ -85,17 +69,9 @@ print(f"📘 Vocabulario con {vocab_size} tokens")
 # ----------------------
 # Codificar datasets
 # ----------------------
-data_train = codificar(texto_train, tokenizer)
-data_val = codificar(texto_val, tokenizer)
+data_train = generar_batches(lineas_train, tokenizer, seq_len, batch_size, token_seccion_id, device)
+data_val   = generar_batches(lineas_val, tokenizer, seq_len, batch_size, token_seccion_id, device)
 
-for nombre, data in [("train", data_train), ("val", data_val)]:
-    ajuste = (len(data) - 1) % seq_len
-    if ajuste != 0:
-        data = data[:-ajuste]
-        if nombre == "train":
-            data_train = data
-        else:
-            data_val = data
 
 # ----------------------
 # Inicializar modelo y criterio
@@ -149,6 +125,7 @@ if os.path.exists(ruta_modelo_drive):
     modelo.load_state_dict(checkpoint["modelo"])
     inicio_fase = checkpoint["fase"]
     inicio_epoch = checkpoint["epoch"] + 1
+    tokenizer = checkpoint["tokenizer"]
     print(f"🔄 Reanudando desde Fase {inicio_fase+1}, Epoch {inicio_epoch}")
 else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
@@ -167,9 +144,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     
     optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
     scheduler = LambdaLR(optimizador, lr_lambda)    
-    num_batches = len(data_train) // (seq_len * batch_size)
-    steps_per_epoch = math.ceil(num_batches / accum_steps)
-    
+
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
         modelo.train()
@@ -177,8 +152,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         accuracy_total = 0
         num_batches = 0
 
-        for i_batch, (x_batch, y_batch) in enumerate(crear_batches(data_train, seq_len, batch_size, token_seccion_id, device, porcentaje_seccion=0.5)):
-            # ✅ NUEVO: autocast actualizado
+        train_gen = generar_batches(lineas_train, tokenizer, seq_len, batch_size, token_seccion_id, device)
+        for i_batch, (x_batch, y_batch) in enumerate(train_gen):            # ✅ NUEVO: autocast actualizado
             with amp.autocast("cuda"):
                 salida = modelo(x_batch)
                 perdida = criterio(salida.view(-1, vocab_size), y_batch.view(-1))
@@ -222,7 +197,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             perdida_val = 0
             accuracy_val = 0
             num_batches_val = 0
-            for x_batch, y_batch in crear_batches(data_val, seq_len, batch_size, token_seccion_id, device, porcentaje_seccion=0.5):
+            val_gen = generar_batches(lineas_val, tokenizer, seq_len, batch_size, token_seccion_id, device)
+            for x_batch, y_batch in val_gen:
                 salida_val = modelo(x_batch)
                 perdida_batch = criterio(salida_val.view(-1, vocab_size), y_batch.view(-1)).item()
                 pred_val = salida_val.argmax(dim=-1)
@@ -250,7 +226,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 "optimizador": optimizador.state_dict(),
                 "scheduler": scheduler.state_dict(),  # <-- guardar scheduler
                 "fase": i,
-                "epoch": epoch
+                "epoch": epoch,
+                "tokenizer": tokenizer, 
             }
             torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")
