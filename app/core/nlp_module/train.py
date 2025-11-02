@@ -12,6 +12,8 @@ from transformer import Transformer
 from generator import generar_texto
 from torch import amp  # ✅ NUEVO: reemplaza torch.cuda.amp
 from torch.optim.lr_scheduler import LambdaLR
+from tokenizers import Tokenizer
+
 
 
 def lr_lambda(step):
@@ -119,9 +121,10 @@ def evaluar_texto_generado(texto):
         "vocab": round(vocab_div, 3)
     }
 
+torch.serialization.add_safe_globals([Tokenizer])
 if os.path.exists(ruta_modelo_drive):
     print("✅ Cargando checkpoint previo desde Drive:", ruta_modelo_drive)
-    checkpoint = torch.load(ruta_modelo_drive, map_location=device)
+    checkpoint = torch.load(ruta_modelo_drive, map_location=device, weights_only=False)
     modelo.load_state_dict(checkpoint["modelo"])
     inicio_fase = checkpoint["fase"]
     inicio_epoch = checkpoint["epoch"] + 1
