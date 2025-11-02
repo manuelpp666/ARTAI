@@ -1,10 +1,12 @@
+import bitsandbytes.optim as bnb_optim
+import os
+os.environ['HF_DATASETS_CACHE'] = 'D:\\cursos\\6to_ciclo\\inteligencia_artificial\\hugginface_cache\\datasets'
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from diffusers import DDPMScheduler, AutoencoderKL, UNet2DModel
+from diffusers import DDPMScheduler, AutoencoderKL, UNet2DConditionModel
 from transformers import CLIPTextModel, CLIPTokenizer
 from accelerate import Accelerator # Herramienta para manejar GPU/multi-GPU
-import os
 from tqdm.auto import tqdm # Para barras de progreso
 
 # Importa tu clase Dataset del paso anterior
@@ -19,7 +21,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # Parámetros de entrenamiento
 IMG_SIZE = 512
 BATCH_SIZE = 1 # ¡Importante! Empezar con 1 para no agotar la VRAM.
-EPOCHS = 5
+EPOCHS = 1
 LEARNING_RATE = 1e-5
 
 def main():
@@ -35,7 +37,7 @@ def main():
     vae = AutoencoderKL.from_pretrained(MODEL_ID, subfolder="vae")
     
     # El modelo U-Net (la "CNN" que vamos a entrenar)
-    unet = UNet2DModel.from_pretrained(MODEL_ID, subfolder="unet")
+    unet = UNet2DConditionModel.from_pretrained(MODEL_ID, subfolder="unet")
     
     # El Scheduler - gestiona el proceso de ruido/des-ruido
     noise_scheduler = DDPMScheduler.from_pretrained(MODEL_ID, subfolder="scheduler")
@@ -58,14 +60,18 @@ def main():
     text_encoder.requires_grad_(False)
     unet.train() # Asegurarse que la U-Net está en modo entrenamiento
 
-    optimizer = torch.optim.AdamW(
-        unet.parameters(),
-        lr=LEARNING_RATE
+    optimizer = bnb_optim.AdamW8bit(
+    unet.parameters(),
+    lr=LEARNING_RATE
     )
 
     # Accelerator se encarga de mover todo al dispositivo (GPU)
+    # Simula un batch size de 8 (1 imagen x 8 pasos)
+    GRAD_ACCUM_STEPS = 8 
+
     accelerator = Accelerator(
-        mixed_precision='fp16' # Usar "mixed precision" para ahorrar memoria
+        mixed_precision='fp16',
+        gradient_accumulation_steps=GRAD_ACCUM_STEPS
     )
     unet, text_encoder, vae, optimizer, train_dataloader = accelerator.prepare(
         unet, text_encoder, vae, optimizer, train_dataloader
@@ -82,7 +88,8 @@ def main():
     
     global_step = 0
     for epoch in range(EPOCHS):
-        progress_bar = tqdm(total=len(train_dataloader), desc=f"Epoch {epoch+1}/{EPOCHS}")
+        # Dividimos el total por los pasos de acumulación
+        progress_bar = tqdm(total=len(train_dataloader) // GRAD_ACCUM_STEPS, desc=f"Epoch {epoch+1}/{EPOCHS}")
 
         for step, batch in enumerate(train_dataloader):
             # batch['pixel_values'] -> Imágenes ya normalizadas [-1, 1]
@@ -124,9 +131,10 @@ def main():
             optimizer.zero_grad()
 
             # Actualizar barra de progreso
-            progress_bar.update(1)
-            progress_bar.set_postfix(loss=loss.item())
-            global_step += 1
+            # Solo actualiza la barra de progreso en el último paso de acumulación
+            if accelerator.sync_gradients:
+                progress_bar.update(1)
+                progress_bar.set_postfix(loss=loss.item())
 
     # --- 6. Guardar el Modelo Entrenado ---
     print("✅ Entrenamiento finalizado.")

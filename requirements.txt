@@ -1,10 +1,23 @@
 Flask
-numpy
 pandas==2.1.1
-torch==2.1.0
+
+# --- CORRECCIÓN DE ERRORES ---
+
+# 1. El error de NumPy:
+# Forzamos una versión de NumPy 1.x (compatible con torch 2.1)
+# Tu error decía "NumPy 2.3.4" pero tu archivo original tenía "numpy==1.26.5"
+numpy<2.0
+
+# 2. El error de 'AttributeError':
+# Tu torch==2.1.0 es muy antiguo para 'transformers'.
+# Actualizamos a una versión de Pytorch más moderna.
+torch>=2.2.0
+torchvision
+
+# --- BIBLIOTECAS DE DIFUSIÓN (Las que añadimos) ---
 transformers
 diffusers
 accelerate
 datasets
-torchvision
 pillow
+tokenizers
