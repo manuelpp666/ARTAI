@@ -27,7 +27,7 @@ def construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=15
         tokenizer.decoder = decoders.ByteLevel()
         trainer = trainers.BpeTrainer(
             vocab_size=vocab_size,
-            special_tokens=["[PAD]", "[UNK]", "[BOS]", "[EOS]", "SECCION"],
+            special_tokens=["[PAD]", "[UNK]", "[BOS]", "[EOS]", "SECCION", "[FIN_SECCION]"],
             show_progress=True
         )
 
@@ -102,7 +102,9 @@ def generar_batches(input_data, tokenizer, seq_len, batch_size, token_seccion_id
 
     # Iterar sobre las líneas ya leídas
     for linea in lineas:
-        buffer.extend(tokenizer.encode(" " + linea.strip()).ids)
+        if not linea.strip().endswith("[FIN_SECCION]"):
+            linea = linea.strip() + " [FIN_SECCION]"
+        buffer.extend(tokenizer.encode(" " + linea).ids)
         
         while len(buffer) >= seq_len + 1:
             x = buffer[:seq_len]

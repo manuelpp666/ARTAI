@@ -104,7 +104,7 @@ class CapaEncoder(nn.Module):
 # Transformer completo
 # ------------------------------
 class Transformer(nn.Module):
-    def __init__(self, vocab_size, d_model=384, N=3, num_heads=6, d_ff=768, max_len=512, dropout=0.1):
+    def __init__(self, vocab_size, d_model=384, N=4, num_heads=6, d_ff=1536, max_len=512, dropout=0.1):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pe = CodificacionPosicional(d_model, max_len)

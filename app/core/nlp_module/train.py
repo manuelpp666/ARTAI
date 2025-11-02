@@ -39,8 +39,8 @@ torch.backends.cudnn.deterministic = False
 # Configuración general
 # ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-seq_len = 320             # ✅ Contexto mayor, ideal para textos largos
-batch_size = 8
+seq_len = 512            # ✅ Contexto mayor, ideal para textos largos
+batch_size = 4
 accum_steps = 4            # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
 porc_validacion = 0.1       # ✅ 10% para validación
@@ -88,7 +88,7 @@ data_val   = generar_batches(lineas_val, tokenizer, seq_len, batch_size, token_s
 # Inicializar modelo y criterio
 # ----------------------
 modelo = Transformer(vocab_size=vocab_size).to(device)
-criterio = nn.CrossEntropyLoss(label_smoothing=0.1)
+criterio = nn.CrossEntropyLoss(label_smoothing=0.05)
 
 # ----------------------
 # Definir fases de entrenamiento
@@ -229,7 +229,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             accuracy_val_media = accuracy_val / num_batches_val
             perplexity = torch.exp(torch.tensor(perdida_val_media))
         lr_actual = optimizador.param_groups[0]["lr"]
-        
+        ppl_train = torch.exp(torch.tensor(perdida_media))
+        print(f"... | Train ppl={ppl_train:.2f} | Val ppl={perplexity:.2f} | ...")
         print(f"Fase {i+1} - Epoch {epoch}/{fase['epochs']} | "
               f"Train: loss={perdida_media:.4f}, acc={accuracy_media:.4f} | "
               f"Val: loss={perdida_val_media:.4f}, acc={accuracy_val_media:.4f}, ppl={perplexity:.2f} | "
@@ -256,9 +257,9 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 device=device,
                 seed_text="Qué es el arte?",       # texto inicial
                 max_length=320,            # longitud de generación
-                top_k=70,                  # top-k sampling
-                top_p=0.97,                 # nucleus sampling
-                temperature=0.85,           # suaviza la probabilidad
+                top_k=40,                  # top-k sampling
+                top_p=0.9,                 # nucleus sampling
+                temperature=0.6,           # suaviza la probabilidad
                 repetition_penalty=1.25     # penalización de repetición
             )
             
