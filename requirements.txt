@@ -19,5 +19,6 @@ transformers
 diffusers
 accelerate
 datasets
+torchvision
 pillow
 tokenizers
