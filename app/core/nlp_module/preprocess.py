@@ -83,28 +83,37 @@ def decodificar(indices, tokenizer):
 # -----------------------------
 # GENERAR BATCHES POR STREAMING
 # -----------------------------
-def generar_batches(ruta_dataset, tokenizer, seq_len, batch_size, token_seccion_id, device='cpu'):
+def generar_batches(input_data, tokenizer, seq_len, batch_size, token_seccion_id, device='cpu'):
     """
     Genera batches de forma dinámica por streaming.
-    Nunca carga todo el dataset en memoria.
+    input_data puede ser un path (str) o una lista de líneas
     """
+    # Obtener líneas según tipo
+    if isinstance(input_data, str):
+        with open(input_data, "r", encoding="utf-8") as f:
+            lineas = f.readlines()
+    elif isinstance(input_data, list):
+        lineas = input_data
+    else:
+        raise TypeError("input_data debe ser str o list")
+    
     buffer = []
     batch_x, batch_y = [], []
 
-    with open(ruta_dataset, "r", encoding="utf-8") as f:
-        for linea in f:
-            buffer.extend(tokenizer.encode(" " + linea.strip()).ids)
-            
-            while len(buffer) >= seq_len + 1:
-                x = buffer[:seq_len]
-                y = buffer[1:seq_len+1]
-                buffer = buffer[seq_len:]
+    # Iterar sobre las líneas ya leídas
+    for linea in lineas:
+        buffer.extend(tokenizer.encode(" " + linea.strip()).ids)
+        
+        while len(buffer) >= seq_len + 1:
+            x = buffer[:seq_len]
+            y = buffer[1:seq_len+1]
+            buffer = buffer[seq_len:]
 
-                batch_x.append(x)
-                batch_y.append(y)
+            batch_x.append(x)
+            batch_y.append(y)
 
-                if len(batch_x) == batch_size:
-                    x_tensor = torch.tensor(batch_x, dtype=torch.long, device=device)
-                    y_tensor = torch.tensor(batch_y, dtype=torch.long, device=device)
-                    yield x_tensor, y_tensor
-                    batch_x, batch_y = [], []
+            if len(batch_x) == batch_size:
+                x_tensor = torch.tensor(batch_x, dtype=torch.long, device=device)
+                y_tensor = torch.tensor(batch_y, dtype=torch.long, device=device)
+                yield x_tensor, y_tensor
+                batch_x, batch_y = [], []
