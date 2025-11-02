@@ -12,7 +12,6 @@ from transformer import Transformer
 from generator import generar_texto
 from torch import amp  # ✅ NUEVO: reemplaza torch.cuda.amp
 from torch.optim.lr_scheduler import LambdaLR
-from tokenizers import Tokenizer
 
 
 
@@ -32,7 +31,7 @@ torch.backends.cudnn.deterministic = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 seq_len = 320             # ✅ Contexto mayor, ideal para textos largos
 batch_size = 8
-accum_steps = 2             # ✅ Gradient accumulation
+accum_steps = 4            # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
 porc_validacion = 0.1       # ✅ 10% para validación
 
@@ -85,10 +84,10 @@ criterio = nn.CrossEntropyLoss(label_smoothing=0.1)
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 12, "lr": 2e-4},
-    {"epochs": 10, "lr": 1e-4},
-    {"epochs": 5,  "lr": 1e-4},
-    {"epochs": 3,  "lr": 5e-5},
+    {"epochs": 6,  "lr": 2e-4},   # 🧩 Calentamiento rápido: aprendizaje base del vocabulario
+    {"epochs": 12, "lr": 1e-4},   # 🔁 Consolidación: mejora sintaxis y frecuencia
+    {"epochs": 8,  "lr": 5e-5},   # 🎨 Fine-tuning: coherencia y fluidez
+    {"epochs": 4,  "lr": 2e-5},   # 🧠 Ajuste final: equilibrio semántico y regularización
 ]
 
 # ----------------------
@@ -121,11 +120,19 @@ def evaluar_texto_generado(texto):
         "vocab": round(vocab_div, 3)
     }
 
-torch.serialization.add_safe_globals([Tokenizer])
+# ----------------------
+# Escalador AMP
+# ----------------------
+scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
+
 if os.path.exists(ruta_modelo_drive):
     print("✅ Cargando checkpoint previo desde Drive:", ruta_modelo_drive)
-    checkpoint = torch.load(ruta_modelo_drive, map_location=device, weights_only=False)
+    checkpoint = torch.load(ruta_modelo_drive, map_location=device)
     modelo.load_state_dict(checkpoint["modelo"])
+    optimizador.load_state_dict(checkpoint["optimizador"])
+    scheduler.load_state_dict(checkpoint["scheduler"])
+    if scaler is not None and checkpoint.get("scaler") is not None:
+        scaler.load_state_dict(checkpoint["scaler"])
     inicio_fase = checkpoint["fase"]
     inicio_epoch = checkpoint["epoch"] + 1
     print(f"🔄 Reanudando desde Fase {inicio_fase+1}, Epoch {inicio_epoch}")
@@ -133,10 +140,7 @@ else:
     print("⚠️ No se encontró modelo local ni checkpoint. Entrenamiento desde cero.")
 
 
-# ----------------------
-# Escalador AMP
-# ----------------------
-scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
+
 
 # ----------------------
 # Entrenamiento
@@ -229,6 +233,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 "scheduler": scheduler.state_dict(),  # <-- guardar scheduler
                 "fase": i,
                 "epoch": epoch,
+                "scaler": scaler.state_dict() if scaler is not None else None,
             }
             torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")

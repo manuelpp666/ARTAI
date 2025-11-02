@@ -104,16 +104,17 @@ class CapaEncoder(nn.Module):
 # Transformer completo
 # ------------------------------
 class Transformer(nn.Module):
-    def __init__(self, vocab_size, d_model=256, N=4, num_heads=8, d_ff=1024, max_len=512, dropout=0.2):
+    def __init__(self, vocab_size, d_model=384, N=3, num_heads=6, d_ff=768, max_len=512, dropout=0.15):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pe = CodificacionPosicional(d_model, max_len)
         self.emb_dropout = nn.Dropout(dropout)
-        self.layers = nn.ModuleList([CapaEncoder(d_model, num_heads, d_ff, dropout) for _ in range(N)])
+        self.layers = nn.ModuleList([
+            CapaEncoder(d_model, num_heads, d_ff, dropout) for _ in range(N)
+        ])
         self.norm_final = nn.LayerNorm(d_model, eps=1e-5)
         self.dropout_final = nn.Dropout(dropout)
         self.out = nn.Linear(d_model, vocab_size)
-
         self._init_weights()
 
     def _init_weights(self):
@@ -122,12 +123,11 @@ class Transformer(nn.Module):
                 nn.init.xavier_uniform_(param)
 
     def generar_mascara_subsecuente(self, sz):
-        """Máscara triangular (no ver tokens futuros)"""
         return torch.triu(torch.ones(sz, sz), 1).bool()
 
     def forward(self, x):
         mask = self.generar_mascara_subsecuente(x.size(1)).to(x.device)
-        mask = mask.unsqueeze(0).unsqueeze(0)  # (1, 1, seq_len, seq_len)
+        mask = mask.unsqueeze(0).unsqueeze(0)
         x = self.emb_dropout(self.pe(self.embedding(x)))
         for capa in self.layers:
             x = capa(x, mask)
