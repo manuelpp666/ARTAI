@@ -28,8 +28,8 @@ torch.backends.cudnn.deterministic = False
 # Configuración general
 # ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-seq_len = 320             # ✅ Contexto mayor, ideal para textos largos
-batch_size = 8
+seq_len = 256             # ✅ Contexto mayor, ideal para textos largos
+batch_size = 4
 accum_steps = 2             # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
 porc_validacion = 0.1       # ✅ 10% para validación
