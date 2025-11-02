@@ -15,9 +15,19 @@ from torch.optim.lr_scheduler import LambdaLR
 
 
 
-def lr_lambda(step):
-    warmup_steps = 2000
-    return min((step + 1) ** -0.5, (step + 1) * (warmup_steps ** -1.5))
+# -------------------------------------------------
+# 🔄 Scheduler corregido con warmup normalizado
+# -------------------------------------------------
+def make_lr_lambda(warmup_steps):
+    def lr_lambda(step):
+        step = max(1, step + 1)
+        if step <= warmup_steps:
+            # Aumenta linealmente de 0 → 1 durante el warmup
+            return float(step) / float(warmup_steps)
+        # Luego decae suavemente como step^-0.5, manteniendo continuidad
+        return (step ** -0.5) * (warmup_steps ** 0.5)
+    return lr_lambda
+
 
 # ----------------------
 # 🔧 Ajustes de rendimiento GPU
@@ -127,6 +137,8 @@ scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
 
 if os.path.exists(ruta_modelo_drive):
     print("✅ Cargando checkpoint previo desde Drive:", ruta_modelo_drive)
+    optimizador = optim.AdamW(modelo.parameters(), lr=1e-4, weight_decay=0.01)
+    scheduler = LambdaLR(optimizador, lr_lambda=make_lr_lambda(2000))
     checkpoint = torch.load(ruta_modelo_drive, map_location=device)
     modelo.load_state_dict(checkpoint["modelo"])
     optimizador.load_state_dict(checkpoint["optimizador"])
@@ -149,8 +161,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | LR={fase['lr']} | Epochs={fase['epochs']} ---")
     
     optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
-    scheduler = LambdaLR(optimizador, lr_lambda)    
-
+    warmup_steps = 2000  # puedes ajustar 500–2000 según tu dataset
+    scheduler = LambdaLR(optimizador, lr_lambda=make_lr_lambda(warmup_steps))
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
         modelo.train()
