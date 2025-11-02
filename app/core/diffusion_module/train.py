@@ -127,12 +127,13 @@ def main():
             # 8. Backpropagation
             accelerator.backward(loss)
             
-            optimizer.step()
-            optimizer.zero_grad()
-
-            # Actualizar barra de progreso
-            # Solo actualiza la barra de progreso en el último paso de acumulación
+            # ✅ ¡CORRECCIÓN! 
+            # El optimizador y la barra de progreso SÓLO deben actualizarse
+            # cuando los gradientes se sincronizan (en el último paso de acumulación)
             if accelerator.sync_gradients:
+                optimizer.step()
+                optimizer.zero_grad()
+                
                 progress_bar.update(1)
                 progress_bar.set_postfix(loss=loss.item())
 

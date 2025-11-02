@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Generador de Arte - ARTAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .generator-container {
+            width: 90%;
+            max-width: 600px;
+            background: #2b2b2b;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        #prompt-input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #generate-button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 1.1em;
+            background-color: #007bff; 
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #generate-button:disabled {
+            background-color: #555;
+        }
+        #image-result-box {
+            width: 100%;
+            min-height: 300px;
+            background: #1e1e1e;
+            margin-top: 20px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #image-result-box img {
+            max-width: 100%;
+            max-height: 512px;
+            border-radius: 5px;
+        }
+        #loader {
+            font-size: 1.2em;
+        }
+        .nav-link {
+            display: block;
+            margin-bottom: 15px;
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    
+    <a href="http://127.0.0.1:5000" class="nav-link">← Volver al Chatbot Principal</a>
+    
+    <div class="generator-container">
+        <h2>Generador de Imágenes Artísticas (Prueba)</h2>
+        
+        <textarea id="prompt-input" rows="3" placeholder="Describe la imagen que quieres crear... (ej: un gato al estilo de Van Gogh)"></textarea>
+        
+        <button id="generate-button">Generar</button>
+        
+        <div id="image-result-box">
+            <span id="loader" style="display: none;">Generando, por favor espera... 🎨</span>
+            <img id="result-image" src="" alt="Imagen generada" style="display: none;">
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/generate.js') }}"></script>
+</body>
+</html>
