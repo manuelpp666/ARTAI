@@ -94,8 +94,8 @@ criterio = nn.CrossEntropyLoss(label_smoothing=0.1)
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 6,  "lr": 2e-4},   # 🧩 Calentamiento rápido: aprendizaje base del vocabulario
-    {"epochs": 12, "lr": 1e-4},   # 🔁 Consolidación: mejora sintaxis y frecuencia
+    {"epochs": 4,  "lr": 2e-4},   # 🧩 Calentamiento rápido: aprendizaje base del vocabulario
+    {"epochs": 12, "lr": 8e-5},   # 🔁 Consolidación: mejora sintaxis y frecuencia
     {"epochs": 8,  "lr": 5e-5},   # 🎨 Fine-tuning: coherencia y fluidez
     {"epochs": 4,  "lr": 2e-5},   # 🧠 Ajuste final: equilibrio semántico y regularización
 ]
@@ -161,7 +161,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
     print(f"\n--- Fase {i+1} | LR={fase['lr']} | Epochs={fase['epochs']} ---")
     
     optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
-    warmup_steps = 2000  # puedes ajustar 500–2000 según tu dataset
+    warmup_steps = 2500  # puedes ajustar 500–2000 según tu dataset
     scheduler = LambdaLR(optimizador, lr_lambda=make_lr_lambda(warmup_steps))
 
     for epoch in range(inicio_epoch, fase["epochs"] + 1):
@@ -256,10 +256,10 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 device=device,
                 seed_text="Qué es el arte?",       # texto inicial
                 max_length=320,            # longitud de generación
-                top_k=80,                  # top-k sampling
-                top_p=0.95,                 # nucleus sampling
-                temperature=0.8,           # suaviza la probabilidad
-                repetition_penalty=1.2     # penalización de repetición
+                top_k=70,                  # top-k sampling
+                top_p=0.97,                 # nucleus sampling
+                temperature=0.85,           # suaviza la probabilidad
+                repetition_penalty=1.25     # penalización de repetición
             )
             
             metricas = evaluar_texto_generado(ejemplo)

@@ -13,14 +13,26 @@ def sample_next_token(logits, top_k=50, top_p=0.9, temperature=0.8):
         top_k = min(top_k, probs.size(-1))
         values, indices = torch.topk(probs, top_k)
         probs = torch.zeros_like(probs).scatter_(-1, indices, values)
-        probs = probs / probs.sum()  # renormalizar
+    
+    # Renormalización segura
+    sum_probs = probs.sum()
+    if sum_probs <= 0 or torch.isnan(sum_probs) or torch.isinf(sum_probs):
+        probs = torch.ones_like(probs) / probs.numel()
+    else:
+        probs = probs / sum_probs
 
     # 🔹 top-p (nucleus): mantener tokens acumulando probabilidad ≤ top_p
     sorted_probs, sorted_indices = torch.sort(probs, descending=True)
     cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-    sorted_indices_to_remove = cumulative_probs > top_p
-    sorted_probs[sorted_indices_to_remove] = 0
-    sorted_probs = sorted_probs / sorted_probs.sum()  # renormalizar
+    sorted_probs[cumulative_probs > top_p] = 0
+
+    # Renormalización segura
+    sum_probs = sorted_probs.sum()
+    if sum_probs <= 0 or torch.isnan(sum_probs) or torch.isinf(sum_probs):
+        sorted_probs = torch.ones_like(sorted_probs) / sorted_probs.numel()
+    else:
+        sorted_probs = sorted_probs / sum_probs
+
     next_token = torch.multinomial(sorted_probs, 1)
     return sorted_indices.gather(-1, next_token)
 
@@ -29,7 +41,7 @@ def sample_next_token(logits, top_k=50, top_p=0.9, temperature=0.8):
 # 🧠 Generación de texto autoregresiva
 # ============================================================
 def generar_texto(modelo, tokenizer, device, seed_text, max_length=200,
-                  top_k=50, top_p=0.9, temperature=0.8, repetition_penalty=1.2):
+                  top_k=50, top_p=0.9, temperature=0.8, repetition_penalty=1.25):
     modelo.eval()
     tokens = tokenizer.encode(seed_text).ids
     generados = tokens.copy()
@@ -43,6 +55,7 @@ def generar_texto(modelo, tokenizer, device, seed_text, max_length=200,
             for token_id in set(generados):
                 if token_id < logits.size(-1):
                     logits[0, token_id] /= repetition_penalty
+                    logits[0, token_id] = max(logits[0, token_id], -1e9)  # evita demasiado negativo
 
             # 🔹 Obtener siguiente token con muestreo controlado
             next_token = sample_next_token(logits, top_k=top_k, top_p=top_p, temperature=temperature)
