@@ -226,7 +226,6 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 "scheduler": scheduler.state_dict(),  # <-- guardar scheduler
                 "fase": i,
                 "epoch": epoch,
-                "tokenizer": tokenizer, 
             }
             torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")
