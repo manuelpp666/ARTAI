@@ -15,7 +15,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 
 def lr_lambda(step):
-    warmup_steps = 4000
+    warmup_steps = 2000
     return min((step + 1) ** -0.5, (step + 1) * (warmup_steps ** -1.5))
 
 # ----------------------
@@ -28,8 +28,8 @@ torch.backends.cudnn.deterministic = False
 # Configuración general
 # ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-seq_len = 256             # ✅ Contexto mayor, ideal para textos largos
-batch_size = 4
+seq_len = 320             # ✅ Contexto mayor, ideal para textos largos
+batch_size = 8
 accum_steps = 2             # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
 porc_validacion = 0.1       # ✅ 10% para validación
@@ -83,7 +83,7 @@ criterio = nn.CrossEntropyLoss(label_smoothing=0.1)
 # Definir fases de entrenamiento
 # ----------------------
 fases = [
-    {"epochs": 12, "lr": 1.5e-4},
+    {"epochs": 12, "lr": 2e-4},
     {"epochs": 10, "lr": 1e-4},
     {"epochs": 5,  "lr": 1e-4},
     {"epochs": 3,  "lr": 5e-5},
@@ -238,8 +238,8 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 device=device,
                 seed_text="Qué es el arte?",       # texto inicial
                 max_length=320,            # longitud de generación
-                top_k=50,                  # top-k sampling
-                top_p=0.9,                 # nucleus sampling
+                top_k=80,                  # top-k sampling
+                top_p=0.95,                 # nucleus sampling
                 temperature=0.8,           # suaviza la probabilidad
                 repetition_penalty=1.2     # penalización de repetición
             )
