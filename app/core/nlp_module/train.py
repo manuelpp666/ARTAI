@@ -260,7 +260,7 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                 top_k=40,                  # top-k sampling
                 top_p=0.9,                 # nucleus sampling
                 temperature=0.6,           # suaviza la probabilidad
-                repetition_penalty=1.25     # penalización de repetición
+                repetition_penalty=1    # penalización de repetición
             )
             
             metricas = evaluar_texto_generado(ejemplo)

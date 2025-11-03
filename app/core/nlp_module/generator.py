@@ -2,12 +2,12 @@ import torch
 import torch.nn.functional as F
 
 # ============================================================
-# 🎯 Muestreo controlado con top-k y top-p (nucleus sampling)
+# 🎯 Muestreo seguro con top-k y top-p
 # ============================================================
 def sample_next_token(logits, top_k=50, top_p=0.9, temperature=0.7):
     """
-    logits: tensor [1, vocab_size] (última posición)
-    devuelve: tensor [1] con el ID del token siguiente
+    logits: tensor [1, vocab_size]
+    devuelve: tensor [1] con ID del siguiente token
     """
     probs = F.softmax(logits / temperature, dim=-1)
 
@@ -18,32 +18,33 @@ def sample_next_token(logits, top_k=50, top_p=0.9, temperature=0.7):
         mask = torch.zeros_like(probs)
         mask.scatter_(1, indices, 1.0)
         probs = probs * mask
-        probs = probs / probs.sum(dim=-1, keepdim=True)
 
     # 🔹 top-p (nucleus)
     sorted_probs, sorted_indices = torch.sort(probs, descending=True)
     cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
     sorted_probs[cumulative_probs > top_p] = 0.0
 
-    # 🔹 renormalización
-    total = sorted_probs.sum(dim=-1, keepdim=True)
-    sorted_probs = sorted_probs / (total + 1e-10)  # evitar NaN
+    # 🔹 Renormalización segura
+    sorted_probs_sum = sorted_probs.sum(dim=-1, keepdim=True)
+    # Si sum=0 o NaN, usar distribución uniforme
+    mask_invalid = (sorted_probs_sum <= 0) | torch.isnan(sorted_probs_sum)
+    if mask_invalid.any():
+        sorted_probs = torch.ones_like(sorted_probs) / sorted_probs.size(-1)
+        sorted_probs_sum = sorted_probs.sum(dim=-1, keepdim=True)
 
-    # 🔹 muestreo multinomial seguro
+    sorted_probs = sorted_probs / sorted_probs_sum
+
+    # 🔹 Muestreo multinomial seguro
     next_idx_in_sorted = torch.multinomial(sorted_probs, 1)
-    next_token = sorted_indices.gather(1, next_idx_in_sorted)  # siempre shape [1,1]
+    next_token = sorted_indices.gather(1, next_idx_in_sorted)
 
-    return next_token.squeeze(0)  # devolver [1]
+    return next_token.squeeze(0)  # shape [1]
 
 # ============================================================
-# 🧠 Generación de texto autoregresiva factual
+# 🧠 Generación de texto autoregresiva robusta
 # ============================================================
 def generar_texto(modelo, tokenizer, device, seed_text, max_length=200,
                   top_k=40, top_p=0.9, temperature=0.6, repetition_penalty=1.15):
-    """
-    Genera texto tipo Wikipedia.
-    Detiene si aparece [FIN_SECCION].
-    """
     modelo.eval()
     tokens = tokenizer.encode(seed_text).ids
     generados = tokens.copy()
@@ -65,7 +66,6 @@ def generar_texto(modelo, tokenizer, device, seed_text, max_length=200,
             next_token = next_token.to(device)
             token_id = next_token.item()
 
-            # 🔹 Detener si aparece token de fin de sección
             if fin_token_id is not None and token_id == fin_token_id:
                 break
 
