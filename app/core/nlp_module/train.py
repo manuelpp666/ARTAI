@@ -12,6 +12,7 @@ from transformer import Transformer
 from generator import generar_texto
 from torch import amp  # ✅ NUEVO: reemplaza torch.cuda.amp
 from torch.optim.lr_scheduler import LambdaLR
+import random
 
 
 
@@ -39,7 +40,7 @@ torch.backends.cudnn.deterministic = False
 # Configuración general
 # ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-seq_len = 512            # ✅ Contexto mayor, ideal para textos largos
+seq_len = 1024            # ✅ Contexto mayor, ideal para textos largos
 batch_size = 4
 accum_steps = 4            # ✅ Gradient accumulation
 checkpoint_every = 2        # ✅ Guardar cada 2 epochs
@@ -89,6 +90,24 @@ data_val   = generar_batches(lineas_val, tokenizer, seq_len, batch_size, token_s
 # ----------------------
 modelo = Transformer(vocab_size=vocab_size).to(device)
 criterio = nn.CrossEntropyLoss(label_smoothing=0.05)
+
+# --- Token de reemplazo dinámico ---
+token_artista_id = stoi.get("<ARTISTA>")
+if token_artista_id is None:
+    token_artista_id = len(stoi)
+    stoi["<ARTISTA>"] = token_artista_id
+    itos[token_artista_id] = "<ARTISTA>"
+    vocab_size += 1
+    # Ajusta las capas del modelo para el nuevo vocab
+    modelo.out = nn.Linear(modelo.out.in_features, vocab_size).to(device)
+    modelo.embedding = nn.Embedding(vocab_size, modelo.embedding.embedding_dim).to(device)
+
+# --- Función para aplicar token masking ---
+def aplicar_token_masking(x_batch, token_seccion_id, token_artista_id, prob_mask=0.15):
+    x_masked = x_batch.clone()
+    mask = (x_masked != token_seccion_id) & (torch.rand_like(x_masked.float()) < prob_mask)
+    x_masked[mask] = token_artista_id
+    return x_masked
 
 # ----------------------
 # Definir fases de entrenamiento
@@ -170,10 +189,13 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
         accuracy_total = 0
         num_batches = 0
 
+        # 🔄 Shuffle las líneas antes de cada epoch
+        random.shuffle(lineas_train)
         train_gen = generar_batches(lineas_train, tokenizer, seq_len, batch_size, token_seccion_id, device)
         for i_batch, (x_batch, y_batch) in enumerate(train_gen):            # ✅ NUEVO: autocast actualizado
             with amp.autocast("cuda"):
-                salida = modelo(x_batch)
+                x_masked = aplicar_token_masking(x_batch, token_seccion_id, token_artista_id, prob_mask=0.15)
+                salida = modelo(x_masked)
                 perdida = criterio(salida.view(-1, vocab_size), y_batch.view(-1))
                 perdida = perdida / accum_steps
 
@@ -259,9 +281,9 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                     seed_text="SECCION Pablo Picasso SECCION",
                     max_length=320,
                     top_k=40,
-                    top_p=0.9,
-                    temperature=0.6,
-                    repetition_penalty=1
+                    top_p=0.95,
+                    temperature=0.7,
+                    repetition_penalty=1.3
                 )
                 metricas = evaluar_texto_generado(ejemplo)
                 print(f"\n💬 Texto de prueba tras epoch {epoch}:\n{ejemplo}\n")
@@ -278,9 +300,9 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
                         seed_text="SECCION Pablo Picasso SECCION",
                         max_length=320,
                         top_k=40,
-                        top_p=0.9,
-                        temperature=0.6,
-                        repetition_penalty=1
+                        top_p=0.95,
+                        temperature=0.7,
+                        repetition_penalty=1.3
                     )
                     metricas = evaluar_texto_generado(ejemplo)
                     print(f"\n💬 Texto de prueba (CPU) tras epoch {epoch}:\n{ejemplo}\n")
@@ -296,3 +318,17 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
 # ----------------------
 torch.save({"modelo": modelo.state_dict()}, ruta_modelo_drive)
 print("✅ Entrenamiento finalizado. Modelo guardado en Drive:", ruta_modelo_drive)
+# ----------------------
+# Guardar checkpoint completo para reanudar entrenamiento
+# ----------------------
+checkpoint_final = {
+    "modelo": modelo.state_dict(),
+    "optimizador": optimizador.state_dict() if optimizador else None,
+    "scheduler": scheduler.state_dict() if scheduler else None,
+    "fase": len(fases)-1,
+    "epoch": fase["epochs"],
+    "scaler": scaler.state_dict() if scaler is not None else None,
+}
+ruta_checkpoint = ruta_modelo_drive.replace(".pth", "_checkpoint.pth")
+torch.save(checkpoint_final, ruta_checkpoint)
+print("💾 Checkpoint final guardado para reanudar entrenamiento en:", ruta_checkpoint)

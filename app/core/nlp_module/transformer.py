@@ -28,7 +28,7 @@ class CodificacionPosicional(nn.Module):
 # Multi-Head Attention mejorada
 # ------------------------------
 class AtencionMultiCabeza(nn.Module):
-    def __init__(self, d_model, num_heads, dropout=0.1):
+    def __init__(self, d_model, num_heads, dropout=0.25):
         super().__init__()
         assert d_model % num_heads == 0
         self.d_k = d_model // num_heads
@@ -51,6 +51,8 @@ class AtencionMultiCabeza(nn.Module):
         scores = scores - scores.max(dim=-1, keepdim=True)[0]
 
         if mask is not None:
+            mask = mask.float()
+            mask = F.dropout(mask, p=0.05, training=self.training)
             scores = scores.masked_fill(mask == 0, -1e4)
 
         attn = F.softmax(scores, dim=-1)
@@ -67,7 +69,7 @@ class AtencionMultiCabeza(nn.Module):
 # FeedForward con GELU + Dropout
 # ------------------------------
 class RedFeedForward(nn.Module):
-    def __init__(self, d_model, d_ff, dropout=0.1):
+    def __init__(self, d_model, d_ff, dropout=0.3):
         super().__init__()
         self.linear1 = nn.Linear(d_model, d_ff)
         self.linear2 = nn.Linear(d_ff, d_model)
@@ -81,7 +83,7 @@ class RedFeedForward(nn.Module):
 # Capa Encoder (Pre-Norm)
 # ------------------------------
 class CapaEncoder(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff, dropout=0.1):
+    def __init__(self, d_model, num_heads, d_ff, dropout=0.3):
         super().__init__()
         self.norm1 = nn.LayerNorm(d_model, eps=1e-5)
         self.norm2 = nn.LayerNorm(d_model, eps=1e-5)
@@ -104,11 +106,11 @@ class CapaEncoder(nn.Module):
 # Transformer completo
 # ------------------------------
 class Transformer(nn.Module):
-    def __init__(self, vocab_size, d_model=384, N=4, num_heads=6, d_ff=1536, max_len=512, dropout=0.1):
+    def __init__(self, vocab_size, d_model=512, N=5, num_heads=8, d_ff=1536, max_len=1024, dropout=0.25):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pe = CodificacionPosicional(d_model, max_len)
-        self.emb_dropout = nn.Dropout(dropout)
+        self.emb_dropout = nn.Dropout(0.4)
         self.layers = nn.ModuleList([
             CapaEncoder(d_model, num_heads, d_ff, dropout) for _ in range(N)
         ])
