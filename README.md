@@ -1,8 +1,6 @@
 arte_chatbot/
 │
 ├── app/                            # Núcleo del backend Flask
-│   ├── routes/                     # Rutas de la API
-│   │   └── chat.py                 # Endpoint principal del chat
 │   │
 │   ├── core/                       # Módulos de inteligencia
 │   │   ├── nlp_module/             # Comprensión y generación de texto artístico
@@ -19,10 +17,6 @@ arte_chatbot/
 │   │   └── fusion_module/          # Integra texto + imagen coherente
 │   │       └── fusion_engine.py    # Coordina qué generar según la intención
 │   │
-│   ├── utils/                      # Herramientas generales
-│   │   ├── logger.py
-│   │   ├── config.py
-│   │   └── helpers.py
 │   │
 │   ├── static/                     # Archivos estáticos para la interfaz web
 │   │   ├── css/
@@ -38,19 +32,14 @@ arte_chatbot/
 │   └── prompts/                    # Prompts textuales para entrenamiento cruzado
 │
 ├── models/                         # Modelos entrenados (.pt, .pkl)
-│   ├── transformer_art_model.pth
-│   ├── diffusion_model.pt
-│   └── tokenizer.pkl
-│
-├── notebooks/                      # Experimentos, pruebas y prototipos
-│   ├── 01_transformer_experiments.ipynb
-│   ├── 02_diffusion_experiments.ipynb
-│   └── 03_fusion_logic.ipynb
+│   ├── arte
+│   ├── diffusion_art_model
+│         └── config.json
+│         └── diffusion_pytorch_model.safetensors
 │
 ├── requirements.txt
 └── README.md
 │── main.py                     # Punto de entrada Flask (rutas + lógica del chat)
-
 
 
 

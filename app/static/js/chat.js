@@ -50,10 +50,19 @@ function appendMessage(text, sender, imageUrl = null) {
     msgDiv.classList.add("message", sender);
 
     msgDiv.innerHTML = `<p>${text}</p>`;
+
     if (imageUrl) {
         const img = document.createElement("img");
         img.src = imageUrl;
         msgDiv.appendChild(img);
+
+        // Botón de descarga
+        const downloadBtn = document.createElement("a");
+        downloadBtn.href = imageUrl;
+        downloadBtn.download = `arte_${text.slice(0, 8)}.png`;
+        downloadBtn.textContent = "⬇️ Descargar";
+        downloadBtn.classList.add("download-btn");
+        msgDiv.appendChild(downloadBtn);
     }
 
     chatBox.appendChild(msgDiv);
@@ -67,15 +76,40 @@ async function sendMessage() {
     appendMessage(message, "user");
     userInput.value = "";
 
-    const res = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message })
-    });
+    // Mostrar loader
+    const loaderId = `loader-${Date.now()}`;
+    const loaderDiv = document.createElement("div");
+    loaderDiv.id = loaderId;
+    loaderDiv.classList.add("message", "bot");
+    loaderDiv.innerHTML = "<p>🎨 Generando imagen...</p>";
+    chatBox.appendChild(loaderDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-    const data = await res.json();
-    appendMessage(data.text, "bot", data.image_url);
+    let data;
+    try {
+        const res = await fetch("/api/predict/", {  // <-- endpoint de Gradio
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: [message] })  // <-- Gradio espera un array
+        });
+        data = await res.json();
+    } catch (err) {
+        console.error(err);
+        loaderDiv.innerHTML = "❌ Error de conexión con el servidor.";
+        return;
+    }
+
+    // Remover loader
+    loaderDiv.remove();
+
+    if (data.error) {
+        appendMessage(`❌ ${data.error}`, "bot");
+    } else {
+        // Gradio devuelve la imagen en data[0]
+        appendMessage("🖼️ Aquí tienes tu imagen generada.", "bot", data.data[0]);
+    }
 }
+
 
 sendBtn.addEventListener("click", sendMessage);
 userInput.addEventListener("keydown", e => {

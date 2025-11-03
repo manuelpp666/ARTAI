@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+import os
 import torch
-from app.core.nlp_module.transformer import Transformer
-from app.core.nlp_module.generator import generar_texto
-from app.core.nlp_module.preprocess import cargar_vocab
-from app.core.nlp_module.interpreter import detectar_intencion 
+from diffusers import DiffusionPipeline, AutoencoderKL
+from diffusers.models.unets.unet_2d_condition import UNet2DConditionModel
+import hashlib
+from flask import Flask, render_template, jsonify, url_for
+import threading
+import gradio as gr
 
 # ---------------------------------------------------
 # CONFIGURACIÓN FLASK
@@ -11,68 +13,102 @@ from app.core.nlp_module.interpreter import detectar_intencion
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
 
 # ---------------------------------------------------
+# CARPETA PARA GUARDAR IMÁGENES
+# ---------------------------------------------------
+GENERATED_ART_FOLDER = os.path.join(app.static_folder, 'generated_art')
+os.makedirs(GENERATED_ART_FOLDER, exist_ok=True)
+
+# ---------------------------------------------------
 # CONFIGURACIÓN DEL DISPOSITIVO
 # ---------------------------------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
 # ---------------------------------------------------
-# CARGA DEL VOCABULARIO
+# CARGA DEL MODELO DE DIFUSIÓN
 # ---------------------------------------------------
-ruta_vocab = "models/vocab_art.pt"  # cambia si lo guardaste en otra ruta
-stoi, itos = cargar_vocab(ruta_vocab)
-vocab_size = len(stoi)
-seq_len = 50
+HF_REPO_ID = "Joseph1112/DibujoArte"
+BASE_MODEL = "CompVis/stable-diffusion-v1-4"
+
+print("Cargando modelo de difusión...")
+try:
+    vae = AutoencoderKL.from_pretrained(BASE_MODEL, subfolder="vae", torch_dtype=torch_dtype)
+    unet = UNet2DConditionModel.from_pretrained(HF_REPO_ID, torch_dtype=torch_dtype)
+    pipeline_difusion = DiffusionPipeline.from_pretrained(
+        BASE_MODEL,
+        vae=vae,
+        unet=unet,
+        torch_dtype=torch_dtype,
+        safety_checker=None
+    ).to(device)
+    print(f"✅ Modelo cargado: {HF_REPO_ID}")
+except Exception as e:
+    print(f"❌ ERROR al cargar modelo: {e}")
+    pipeline_difusion = None
 
 # ---------------------------------------------------
-# CARGA DEL MODELO
+# FUNCIÓN DE GENERACIÓN DE IMÁGENES
 # ---------------------------------------------------
-modelo = Transformer(vocab_size=vocab_size).to(device)
+def generar_imagen(prompt):
+    if pipeline_difusion is None or not prompt:
+        return None
+    
+    prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    img_filename = f"arte_{prompt_hash[:8]}.png"
+    img_save_path = os.path.join(GENERATED_ART_FOLDER, img_filename)
 
-ruta_modelo = "models/transformer_art_model.pth"
-checkpoint = torch.load(ruta_modelo, map_location=device)
-modelo.load_state_dict(checkpoint["modelo"])
-
-modelo.eval()
-print(f"✅ Modelo cargado correctamente desde {ruta_modelo}")
-print(f"✅ Vocabulario con {vocab_size} caracteres cargado.")
+    if not os.path.exists(img_save_path):
+        with torch.no_grad():
+            imagen = pipeline_difusion(prompt, num_inference_steps=50).images[0]
+        imagen.save(img_save_path)
+    
+    return img_save_path
 
 # ---------------------------------------------------
-# RUTAS FLASK
+# RUTA PRINCIPAL (HTML)
 # ---------------------------------------------------
 @app.route('/')
 def home():
-    return render_template('chat.html')
+    return render_template("chat.html")
 
-@app.route('/chat', methods=['POST'])
-def chat():
-    user_message = request.json.get("message", "")
+# ---------------------------------------------------
+# ENDPOINT PARA JS
+# ---------------------------------------------------
+@app.route('/api/generate', methods=['POST'])
+def api_generate():
+    from flask import request
+    data = request.json
+    prompt = data.get("prompt", "")
+    if not prompt:
+        return jsonify({"error": "No prompt received"}), 400
+    try:
+        img_path = generar_imagen(prompt)
+        img_url = url_for('static', filename=f'generated_art/{os.path.basename(img_path)}')
+        return jsonify({"image_url": img_url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    # 🔍 Detectar intención
-    tipo = detectar_intencion(user_message)
-    print(f"🎯 Intención detectada: {tipo}")
+# ---------------------------------------------------
+# FUNCIONES GRADIO (Solo backend opcional)
+# ---------------------------------------------------
+def gradio_generate(prompt):
+    return generar_imagen(prompt)
 
-    if tipo == "imagen":
-        # Aquí podrías llamar a tu generador de imágenes (si lo tienes)
-        respuesta = "🖼️ Detecté que deseas generar una imagen relacionada con arte."
-    elif tipo == "texto":
-        # Generar texto coherente
-        respuesta = generar_texto(
-            modelo=modelo,
-            texto_inicio=user_message,
-            longitud=200,        # puedes ajustarlo
-            temperatura=0.9,     # menor → más coherente, mayor → más creativo
-            seq_len=seq_len,
-            device=device,
-            stoi=stoi,
-            itos=itos
-        )
-    else:
-        respuesta = "🤖 No entendí bien tu intención. ¿Quieres que te explique algo o genere una imagen?"
+def launch_gradio():
+    with gr.Blocks() as gr_app:
+        gr.Interface(
+            fn=gradio_generate,
+            inputs=gr.Textbox(placeholder="Escribe tu prompt aquí...", label="Prompt"),
+            outputs=gr.Image(type="filepath"),
+            live=False
+        ).launch(server_name="0.0.0.0", server_port=7861, share=True)
 
-    return jsonify({"text": respuesta, "tipo": tipo})
+# Lanzar Gradio en un hilo separado
+threading.Thread(target=launch_gradio, daemon=True).start()
 
 # ---------------------------------------------------
 # MAIN
 # ---------------------------------------------------
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    # Flask sirve tu frontend HTML/JS/CSS
+    app.run(host='0.0.0.0', port=5000)
