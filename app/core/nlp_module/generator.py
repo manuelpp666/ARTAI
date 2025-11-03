@@ -5,6 +5,10 @@ import torch.nn.functional as F
 # 🎯 Muestreo controlado con top-k y top-p (nucleus sampling)
 # ============================================================
 def sample_next_token(logits, top_k=50, top_p=0.9, temperature=0.7):
+    """
+    logits: tensor [1, vocab_size] (última posición)
+    devuelve: tensor [1] con el ID del token siguiente
+    """
     probs = F.softmax(logits / temperature, dim=-1)
 
     # 🔹 top-k
@@ -12,25 +16,24 @@ def sample_next_token(logits, top_k=50, top_p=0.9, temperature=0.7):
         top_k = min(top_k, probs.size(-1))
         values, indices = torch.topk(probs, top_k)
         mask = torch.zeros_like(probs)
-        mask.scatter_(-1, indices, 1.0)
+        mask.scatter_(1, indices, 1.0)
         probs = probs * mask
         probs = probs / probs.sum(dim=-1, keepdim=True)
 
-    # 🔹 top-p (nucleus sampling)
+    # 🔹 top-p (nucleus)
     sorted_probs, sorted_indices = torch.sort(probs, descending=True)
     cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
     sorted_probs[cumulative_probs > top_p] = 0.0
 
-    # ⚠️ Renormalización segura
-    total = sorted_probs.sum()
-    if total <= 0 or torch.isnan(total):
-        sorted_probs = F.softmax(logits / temperature, dim=-1)
-        sorted_indices = torch.arange(sorted_probs.size(-1), device=logits.device)
+    # 🔹 renormalización
+    total = sorted_probs.sum(dim=-1, keepdim=True)
+    sorted_probs = sorted_probs / (total + 1e-10)  # evitar NaN
 
-    sorted_probs = sorted_probs / sorted_probs.sum()
-    next_token = torch.multinomial(sorted_probs, 1)
-    return sorted_indices.gather(-1, next_token)
+    # 🔹 muestreo multinomial seguro
+    next_idx_in_sorted = torch.multinomial(sorted_probs, 1)
+    next_token = sorted_indices.gather(1, next_idx_in_sorted)  # siempre shape [1,1]
 
+    return next_token.squeeze(0)  # devolver [1]
 
 # ============================================================
 # 🧠 Generación de texto autoregresiva factual
@@ -38,8 +41,8 @@ def sample_next_token(logits, top_k=50, top_p=0.9, temperature=0.7):
 def generar_texto(modelo, tokenizer, device, seed_text, max_length=200,
                   top_k=40, top_p=0.9, temperature=0.6, repetition_penalty=1.15):
     """
-    Genera texto factual tipo Wikipedia.
-    Se detiene automáticamente si aparece [FIN_SECCION].
+    Genera texto tipo Wikipedia.
+    Detiene si aparece [FIN_SECCION].
     """
     modelo.eval()
     tokens = tokenizer.encode(seed_text).ids
@@ -52,12 +55,12 @@ def generar_texto(modelo, tokenizer, device, seed_text, max_length=200,
         for _ in range(max_length):
             logits = modelo(input_ids)[:, -1, :]
 
-            # 🔹 Penalización de repetición leve
+            # 🔹 Penalización de repetición
             for token_id in set(generados):
                 if token_id < logits.size(-1):
                     logits[0, token_id] /= repetition_penalty
 
-            # 🔹 Muestreo controlado
+            # 🔹 Muestreo seguro
             next_token = sample_next_token(logits, top_k=top_k, top_p=top_p, temperature=temperature)
             next_token = next_token.to(device)
             token_id = next_token.item()
@@ -67,6 +70,6 @@ def generar_texto(modelo, tokenizer, device, seed_text, max_length=200,
                 break
 
             generados.append(token_id)
-            input_ids = torch.cat([input_ids, next_token], dim=1)
+            input_ids = torch.cat([input_ids, next_token.unsqueeze(0)], dim=1)
 
     return tokenizer.decode(generados)
