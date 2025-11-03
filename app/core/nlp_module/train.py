@@ -251,21 +251,43 @@ for i, fase in enumerate(fases[inicio_fase:], start=inicio_fase):
             torch.save(checkpoint_data, ruta_modelo_drive)
             print(f"💾 Checkpoint guardado en Drive después de epoch {epoch}")
 
-            ejemplo = generar_texto(
-                modelo=modelo,
-                tokenizer=tokenizer,
-                device=device,
-                seed_text="Qué es el arte?",       # texto inicial
-                max_length=320,            # longitud de generación
-                top_k=40,                  # top-k sampling
-                top_p=0.9,                 # nucleus sampling
-                temperature=0.6,           # suaviza la probabilidad
-                repetition_penalty=1    # penalización de repetición
-            )
-            
-            metricas = evaluar_texto_generado(ejemplo)
-            print(f"\n💬 Texto de prueba tras epoch {epoch}:\n{ejemplo}\n")
-            print(f"📊 Métricas de texto: {metricas}\n")
+            try:
+                ejemplo = generar_texto(
+                    modelo=modelo,
+                    tokenizer=tokenizer,
+                    device=device,
+                    seed_text="SECCION Pablo Picasso SECCION",
+                    max_length=320,
+                    top_k=40,
+                    top_p=0.9,
+                    temperature=0.6,
+                    repetition_penalty=1
+                )
+                metricas = evaluar_texto_generado(ejemplo)
+                print(f"\n💬 Texto de prueba tras epoch {epoch}:\n{ejemplo}\n")
+                print(f"📊 Métricas de texto: {metricas}\n")
+
+            except Exception as e:
+                
+                print(f"⚠️ Error generando texto en GPU, intentando en CPU: {e}")
+                try:
+                    ejemplo = generar_texto(
+                        modelo=modelo.to("cpu"),
+                        tokenizer=tokenizer,
+                        device="cpu",
+                        seed_text="SECCION Pablo Picasso SECCION",
+                        max_length=320,
+                        top_k=40,
+                        top_p=0.9,
+                        temperature=0.6,
+                        repetition_penalty=1
+                    )
+                    metricas = evaluar_texto_generado(ejemplo)
+                    print(f"\n💬 Texto de prueba (CPU) tras epoch {epoch}:\n{ejemplo}\n")
+                    print(f"📊 Métricas de texto: {metricas}\n")
+                    modelo.to(device)  # volver al GPU
+                except Exception as e2:
+                    print(f"⚠️ También falló la generación en CPU, se omite: {e2}")
 
     inicio_epoch = 1
 
