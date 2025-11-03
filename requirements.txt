@@ -22,7 +22,4 @@ datasets
 torchvision
 pillow
 tokenizers
-huggingface_hub
 safetensors
-
-gradio
