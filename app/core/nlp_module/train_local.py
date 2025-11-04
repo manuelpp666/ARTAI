@@ -12,6 +12,7 @@ from transformer import Transformer
 from generator import generar_texto
 from torch import amp
 from torch.optim.lr_scheduler import LambdaLR
+from tqdm import tqdm  # <--- NUEVO: Para la barra de progreso
 
 
 # -------------------------------------------------
@@ -53,6 +54,9 @@ print(f"Leyendo dataset desde: {ruta_dataset}")
 with open(ruta_dataset, "r", encoding="utf-8") as f:
     lineas = f.readlines()
 
+print("Barajando el dataset para una validación robusta...")
+random.shuffle(lineas) # <--- MODIFICADO (ANTI-OVERFITTING)
+
 num_train_lines = int(len(lineas) * (1 - porc_validacion))
 lineas_train = lineas[:num_train_lines]
 lineas_val = lineas[num_train_lines:]
@@ -74,13 +78,25 @@ print(f"📘 Vocabulario listo con {vocab_size} tokens")
 # ----------------------
 # 🔡 Codificar datasets
 # ----------------------
-data_train = generar_batches(lineas_train, tokenizer, seq_len, batch_size, token_seccion_id, device)
-data_val = generar_batches(lineas_val, tokenizer, seq_len, batch_size, token_seccion_id, device)
+# Nota: Los generadores se crearán dentro del bucle de epoch para el shuffling
+print("Generadores de batches listos.")
+
 
 # ----------------------
 # 🧠 Inicializar modelo
 # ----------------------
-modelo = Transformer(vocab_size=vocab_size).to(device)
+print("Inicializando modelo PEQUEÑO y REGULARIZADO para evitar overfitting...")
+# <--- MODIFICADO (ANTI-OVERFITTING): Arquitectura más pequeña y con más dropout
+modelo = Transformer(
+    vocab_size=vocab_size,
+    d_model=384,        # Reducido de 512
+    N=4,                # Reducido de 5
+    num_heads=6,        # Reducido de 8
+    d_ff=1536,          # d_model * 4
+    max_len=1024,
+    dropout=0.35        # Dropout base más alto
+).to(device)
+
 criterio = nn.CrossEntropyLoss(label_smoothing=0.05)
 
 # --- Token de reemplazo dinámico ---
@@ -90,11 +106,13 @@ if token_artista_id is None:
     stoi["<ARTISTA>"] = token_artista_id
     itos[token_artista_id] = "<ARTISTA>"
     vocab_size += 1
-    modelo.out = nn.Linear(modelo.out.in_features, vocab_size).to(device)
+    # Re-ajustar capas de embedding y salida
     modelo.embedding = nn.Embedding(vocab_size, modelo.embedding.embedding_dim).to(device)
+    modelo.out = nn.Linear(modelo.out.in_features, vocab_size).to(device)
+
 
 # --- Token masking ---
-def aplicar_token_masking(x_batch, token_seccion_id, token_artista_id, prob_mask=0.15):
+def aplicar_token_masking(x_batch, token_seccion_id, token_artista_id, prob_mask=0.20): # <--- MODIFICADO (ANTI-OVERFITTING): 0.15 a 0.20
     x_masked = x_batch.clone()
     mask = (x_masked != token_seccion_id) & (torch.rand_like(x_masked.float()) < prob_mask)
     x_masked[mask] = token_artista_id
@@ -122,18 +140,25 @@ scaler = amp.GradScaler("cuda") if device.type == "cuda" else None
 for i, fase in enumerate(fases, start=1):
     print(f"\n--- Fase {i} | LR={fase['lr']} | Epochs={fase['epochs']} ---")
 
-    optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.01)
+    # <--- MODIFICADO (ANTI-OVERFITTING): weight_decay aumentado
+    optimizador = optim.AdamW(modelo.parameters(), lr=fase["lr"], weight_decay=0.05)
     scheduler = LambdaLR(optimizador, lr_lambda=make_lr_lambda(2500))
 
     for epoch in range(1, fase["epochs"] + 1):
         modelo.train()
         total_loss, total_acc, num_batches = 0, 0, 0
 
+        # Barajar líneas de entrenamiento en cada epoch
         random.shuffle(lineas_train)
+        # Crear generador y barra de progreso para esta epoch
         train_gen = generar_batches(lineas_train, tokenizer, seq_len, batch_size, token_seccion_id, device)
+        
+        # <--- NUEVO: Barra de progreso TQDM para el entrenamiento
+        progress_bar = tqdm(train_gen, desc=f"Fase {i} Epoch {epoch}/{fase['epochs']} (Train)", leave=False)
 
-        for i_batch, (x_batch, y_batch) in enumerate(train_gen):
+        for i_batch, (x_batch, y_batch) in enumerate(progress_bar):
             with amp.autocast("cuda"):
+                # <--- MODIFICADO: Se usará el nuevo default de prob_mask=0.20
                 x_masked = aplicar_token_masking(x_batch, token_seccion_id, token_artista_id)
                 salida = modelo(x_masked)
                 perdida = criterio(salida.view(-1, vocab_size), y_batch.view(-1)) / accum_steps
@@ -158,6 +183,17 @@ for i, fase in enumerate(fases, start=1):
             total_loss += perdida.item() * accum_steps
             total_acc += (salida.argmax(-1) == y_batch).float().mean().item()
             num_batches += 1
+            
+            # <--- NUEVO: Actualizar barra de progreso con métricas
+            if i_batch % 10 == 0: # Actualizar cada 10 batches
+                progress_bar.set_postfix(loss=f"{(total_loss / num_batches):.4f}", acc=f"{(total_acc / num_batches):.4f}")
+
+        # Cerrar barra de progreso de entrenamiento
+        progress_bar.close()
+
+        if num_batches == 0:
+            print(f"Fase {i} - Epoch {epoch}/{fase['epochs']} | No se procesaron batches de entrenamiento.")
+            continue
 
         loss_train = total_loss / num_batches
         acc_train = total_acc / num_batches
@@ -168,11 +204,21 @@ for i, fase in enumerate(fases, start=1):
         with torch.no_grad():
             loss_val, acc_val, nb_val = 0, 0, 0
             val_gen = generar_batches(lineas_val, tokenizer, seq_len, batch_size, token_seccion_id, device)
-            for x_batch, y_batch in val_gen:
+            
+            # <--- NUEVO: Barra de progreso TQDM para la validación
+            val_progress_bar = tqdm(val_gen, desc=f"Fase {i} Epoch {epoch}/{fase['epochs']} (Val)", leave=False)
+            
+            for x_batch, y_batch in val_progress_bar:
                 salida_val = modelo(x_batch)
                 loss_val += criterio(salida_val.view(-1, vocab_size), y_batch.view(-1)).item()
                 acc_val += (salida_val.argmax(-1) == y_batch).float().mean().item()
                 nb_val += 1
+            
+            val_progress_bar.close()
+
+        if nb_val == 0:
+            print(f"Fase {i} - Epoch {epoch}/{fase['epochs']} | No se procesaron batches de validación.")
+            continue
 
         loss_val /= nb_val
         acc_val /= nb_val
@@ -182,6 +228,28 @@ for i, fase in enumerate(fases, start=1):
         print(f"Fase {i} - Epoch {epoch}/{fase['epochs']} | "
               f"Train loss={loss_train:.4f}, acc={acc_train:.4f}, ppl={ppl_train:.2f} | "
               f"Val loss={loss_val:.4f}, acc={acc_val:.4f}, ppl={ppl_val:.2f} | LR={lr_actual:.6f}")
+        
+        # <--- NUEVO: Generar texto cada 2 épocas o en la última época de la fase
+        if epoch % 2 == 0 or epoch == fase["epochs"]:
+            print("--- Generando texto de muestra ---")
+            modelo.eval() # Asegurarse de que esté en modo evaluación
+            try:
+                ejemplo_intermedio = generar_texto(
+                    modelo=modelo,
+                    tokenizer=tokenizer,
+                    device=device,
+                    seed_text="SECCION Pablo Picasso SECCION",
+                    max_length=320,
+                    top_k=40,
+                    top_p=0.90,
+                    temperature=0.7,
+                    repetition_penalty=1.15
+                )
+                print(f"💬 Muestra (Epoch {epoch}):\n{ejemplo_intermedio}\n")
+            except Exception as e:
+                print(f"❌ Error al generar texto de muestra: {e}")
+            # El modelo se volverá a poner en modo .train() al inicio del siguiente bucle de epoch
+
 
 # ----------------------
 # 💾 Guardado final
@@ -203,6 +271,7 @@ print(f"💾 Checkpoint final guardado en: {ruta_checkpoint_final}")
 # ----------------------
 # 🖋️ Generar texto de muestra
 # ----------------------
+print("--- Generando texto de muestra FINAL ---")
 ejemplo = generar_texto(
     modelo=modelo,
     tokenizer=tokenizer,
@@ -210,8 +279,8 @@ ejemplo = generar_texto(
     seed_text="SECCION Pablo Picasso SECCION",
     max_length=320,
     top_k=40,
-    top_p=0.95,
+    top_p=0.90,                     # <--- MODIFICADO (ANTI-OVERFITTING): Ligeramente más conservador
     temperature=0.7,
-    repetition_penalty=1.3
+    repetition_penalty=1.15         # <--- MODIFICADO (ANTI-OVERFITTING): Reducido para evitar artefactos
 )
 print(f"\n💬 Texto generado de prueba:\n{ejemplo}\n")
