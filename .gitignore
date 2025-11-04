@@ -2,4 +2,5 @@ nombre_entorno
 venv
 .venv
 models/diffusion_art_model/
-models/arte/
+models
+bpe_tokenizer.json
