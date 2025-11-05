@@ -33,11 +33,15 @@ def construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=15
 
         # Generador que devuelve trozos del dataset
         def iter_texto(ruta_dataset, chunk_size=chunk_size):
-            with open(ruta_dataset, "r", encoding="utf-8") as f:
+            # ✅ CORRECCIÓN: Usamos 'latin-1' en lugar de 'utf-8'.
+            # Esta codificación es más robusta para textos en español 
+            # y rara vez falla, preservando 'ñ' y tildes.
+            with open(ruta_dataset, "r", encoding="latin-1") as f:
                 while True:
                     chunk = f.read(chunk_size)
                     if not chunk:
                         break
+                    # Reemplazamos caracteres problemáticos comunes
                     yield chunk.replace("\u2026", "...").replace("\r\n", "\n")
 
         tokenizer.train_from_iterator(iter_texto(ruta_dataset), trainer)
