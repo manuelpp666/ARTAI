@@ -3,6 +3,7 @@
 # ================================================================
 import os
 import math
+import gc
 import torch
 import numpy as np
 from transformers import (
@@ -10,7 +11,8 @@ from transformers import (
     AutoTokenizer,
     Trainer,
     TrainingArguments,
-    DataCollatorForLanguageModeling
+    DataCollatorForLanguageModeling,
+    BitsAndBytesConfig
 )
 from datasets import load_dataset
 
@@ -25,12 +27,31 @@ os.makedirs(output_dir, exist_ok=True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Usando dispositivo: {device}")
 
+# Limpieza de memoria GPU
+gc.collect()
+torch.cuda.empty_cache()
+
 # ----------------------
 # 📚 Cargar modelo y tokenizer
 # ----------------------
 print(f"Cargando modelo base: {model_name}")
+
+bnb_config = BitsAndBytesConfig(
+    load_in_8bit=True,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16
+)
+
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    quantization_config=bnb_config,
+    device_map="auto",
+    torch_dtype=torch.bfloat16,
+    low_cpu_mem_usage=True
+)
 
 # Asegurar tokens especiales
 if tokenizer.pad_token is None:
@@ -62,13 +83,9 @@ tokenized_datasets = dataset.map(tokenize_function, batched=True, num_proc=2, re
 data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
 # ----------------------
-# 📊 Métricas — corregida
+# 📊 Métricas
 # ----------------------
 def compute_metrics(eval_pred):
-    """
-    Calcula loss promedio y perplexity en validación.
-    HuggingFace ya pasa el loss, así que no hay que recalcular manualmente.
-    """
     loss = eval_pred.metrics["eval_loss"] if "eval_loss" in eval_pred.metrics else None
     if loss is not None:
         perplexity = math.exp(loss) if loss < 10 else float("inf")
@@ -80,12 +97,12 @@ def compute_metrics(eval_pred):
 # ----------------------
 training_args = TrainingArguments(
     output_dir=output_dir,
-    evaluation_strategy="epoch",    # ✅ Esta opción existe en versiones recientes
+    eval_strategy="epoch",  # actualizado
     save_strategy="epoch",
     num_train_epochs=3,
-    per_device_train_batch_size=2,
-    per_device_eval_batch_size=2,
-    gradient_accumulation_steps=4,
+    per_device_train_batch_size=1,
+    per_device_eval_batch_size=1,
+    gradient_accumulation_steps=8,
     learning_rate=5e-5,
     warmup_steps=200,
     fp16=torch.cuda.is_available(),
@@ -96,8 +113,8 @@ training_args = TrainingArguments(
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
     greater_is_better=False,
-    report_to=["tensorboard"],  # ✅ Visualiza con %tensorboard --logdir
-    optim="adamw_torch",
+    report_to=["tensorboard"],
+    optim="paged_adamw_8bit",  # usa optimizador eficiente
 )
 
 # ----------------------
