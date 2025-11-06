@@ -2,3 +2,4 @@ nombre_entorno
 venv
 .venv
 models
+app/static/generated_art
