@@ -43,7 +43,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     device_map="auto",
-    torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
     low_cpu_mem_usage=True
 )
 
@@ -133,7 +133,8 @@ training_args = TrainingArguments(
     gradient_accumulation_steps=8,
     learning_rate=5e-5,
     warmup_steps=200,
-    fp16=torch.cuda.is_available(),
+    fp16=True,
+    bf16=False,
     logging_dir=f"{output_dir}/logs",
     logging_strategy="steps",
     logging_steps=50,
