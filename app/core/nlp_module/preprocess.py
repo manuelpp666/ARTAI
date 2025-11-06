@@ -16,8 +16,14 @@ def construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=15
     Devuelve tokenizer, stoi y itos.
     """
     if os.path.exists(ruta_vocab):
-        tokenizer = Tokenizer.from_file(ruta_vocab)
-        print(f"📚 Tokenizer BPE cargado desde {ruta_vocab}")
+        try:
+            tokenizer = Tokenizer.from_file(ruta_vocab)
+            print(f"📚 Tokenizer BPE cargado desde {ruta_vocab}")
+        except Exception as e:
+            print(f"Error al cargar tokenizer (probablemente corrupto): {e}")
+            print("Se entrenará uno nuevo...")
+            os.remove(ruta_vocab) # Borra el archivo corrupto
+            return construir_vocab(ruta_dataset, ruta_vocab, vocab_size) # Vuelve a intentarlo
     else:
         print("🚀 Entrenando nuevo tokenizer BPE por streaming...")
         tokenizer = Tokenizer(models.BPE(unk_token="[UNK]"))
@@ -33,10 +39,11 @@ def construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=15
 
         # Generador que devuelve trozos del dataset
         def iter_texto(ruta_dataset, chunk_size=chunk_size):
-            # ✅ CORRECCIÓN: Usamos 'latin-1' en lugar de 'utf-8'.
-            # Esta codificación es más robusta para textos en español 
-            # y rara vez falla, preservando 'ñ' y tildes.
-            with open(ruta_dataset, "r", encoding="latin-1") as f:
+            # ✅ CORRECCIÓN 1: Usamos 'utf-8-sig'.
+            # Esto lee UTF-8 estándar y también maneja el 'BOM' (un caracter
+            # invisible que Windows a veces añade) que puede corromper 'utf-8'.
+            # También añadimos 'errors="ignore"' como red de seguridad final.
+            with open(ruta_dataset, "r", encoding="utf-8-sig", errors="ignore") as f:
                 while True:
                     chunk = f.read(chunk_size)
                     if not chunk:
@@ -46,7 +53,9 @@ def construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=15
 
         tokenizer.train_from_iterator(iter_texto(ruta_dataset), trainer)
         tokenizer.post_processor = processors.ByteLevel(trim_offsets=True)
-        tokenizer.save(ruta_vocab)
+        
+        # Guardamos sin 'pretty=True' para evitar corrupción
+        tokenizer.save(ruta_vocab, pretty=False) 
         print(f"✅ Tokenizer BPE entrenado y guardado en {ruta_vocab}")
 
     # Crear mappings stoi / itos
@@ -60,6 +69,7 @@ def construir_vocab(ruta_dataset, ruta_vocab="bpe_tokenizer.json", vocab_size=15
 # -----------------------------
 def guardar_vocab(stoi, itos, ruta_modelo):
     ruta_vocab = ruta_modelo.replace(".pth", "_vocab.json")
+    # ✅ CORRECCIÓN 2: Los archivos JSON SIEMPRE deben guardarse como 'utf-8'.
     with open(ruta_vocab, "w", encoding="utf-8") as f:
         json.dump({"stoi": stoi, "itos": itos}, f, ensure_ascii=False, indent=2)
     print(f"✅ Vocabulario guardado en: {ruta_vocab}")
@@ -68,6 +78,7 @@ def cargar_vocab(ruta_modelo):
     ruta_vocab = ruta_modelo.replace(".pth", "_vocab.json")
     if not os.path.exists(ruta_vocab):
         raise FileNotFoundError(f"No se encontró vocabulario en {ruta_vocab}")
+    # ✅ CORRECCIÓN 3: Los archivos JSON SIEMPRE deben leerse como 'utf-8'.
     with open(ruta_vocab, "r", encoding="utf-8") as f:
         data = json.load(f)
     itos = {int(k): v for k, v in data["itos"].items()}
@@ -92,9 +103,12 @@ def generar_batches(input_data, tokenizer, seq_len, batch_size, token_seccion_id
     Genera batches de forma dinámica por streaming.
     input_data puede ser un path (str) o una lista de líneas
     """
+    lineas = []
     # Obtener líneas según tipo
     if isinstance(input_data, str):
-        with open(input_data, "r", encoding="utf-8") as f:
+        # ✅ CORRECCIÓN 4: Usamos 'utf-8-sig' aquí también, para leer
+        # los archivos de entrenamiento/validación.
+        with open(input_data, "r", encoding="utf-8-sig", errors="ignore") as f:
             lineas = f.readlines()
     elif isinstance(input_data, list):
         lineas = input_data
