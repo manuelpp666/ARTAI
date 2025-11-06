@@ -8,6 +8,9 @@ from diffusers import DDPMScheduler, AutoencoderKL, UNet2DConditionModel
 from transformers import CLIPTextModel, CLIPTokenizer
 from accelerate import Accelerator # Herramienta para manejar GPU/multi-GPU
 from tqdm.auto import tqdm # Para barras de progreso
+from itertools import chain # Para el nuevo optimizer
+import numpy as np
+import argparse # <-- 1. IMPORTAMOS LA LIBRERÍA PARA EL SELECTOR
 
 # Importa tu clase Dataset del paso anterior
 from dataset import ArtImageDataset 
@@ -25,6 +28,21 @@ EPOCHS = 1
 LEARNING_RATE = 1e-5
 
 def main():
+
+    # --- INICIO DEL CAMBIO 1: AÑADIR SELECTOR DE MODO ---
+    parser = argparse.ArgumentParser(description="Entrenar modelo de difusión.")
+    parser.add_argument(
+        '--train_mode', 
+        type=str, 
+        default='all', 
+        choices=['all', 'unet_only', 'text_encoder_only'],
+        help='Qué parte del modelo entrenar: "all" (ambos), "unet_only" (solo difusor), o "text_encoder_only" (solo traductor)'
+    )
+    args = parser.parse_args()
+    print(f"\n--- 🚀 MODO DE ENTRENAMIENTO SELECCIONADO: {args.train_mode} ---\n")
+    # --- FIN DEL CAMBIO 1 ---
+
+
     # --- 2. Cargar Modelos y Tokenizer ---
     
     # El Tokenizer que tu Dataset necesita
@@ -55,14 +73,34 @@ def main():
 
     # --- 4. Preparar para Entrenamiento (Optimizador y Accelerator) ---
     
-    # Solo entrenaremos la U-Net, congelamos lo demás
+    # --- INICIO DEL CAMBIO 2: LÓGICA DE CONGELACIÓN Y OPTIMIZADOR ---
+    
+    # VAE siempre congelado
     vae.requires_grad_(False)
-    text_encoder.requires_grad_(False)
-    unet.train() # Asegurarse que la U-Net está en modo entrenamiento
+
+    if args.train_mode == 'unet_only':
+        print("INFO: Congelando text_encoder. Entrenando SOLO U-Net.")
+        text_encoder.requires_grad_(False)
+        unet.train()
+        parametros_a_entrenar = unet.parameters()
+        
+    elif args.train_mode == 'text_encoder_only':
+        print("INFO: Congelando U-Net. Entrenando SOLO text_encoder.")
+        unet.requires_grad_(False)
+        text_encoder.train()
+        parametros_a_entrenar = text_encoder.parameters()
+        
+    else: # 'all'
+        print("INFO: Entrenando U-Net y text_encoder (modo 'all').")
+        unet.train()
+        text_encoder.train()
+        parametros_a_entrenar = chain(unet.parameters(), text_encoder.parameters())
+    
+    # --- FIN DEL CAMBIO 2 ---
 
     optimizer = bnb_optim.AdamW8bit(
-    unet.parameters(),
-    lr=LEARNING_RATE
+        parametros_a_entrenar,
+        lr=LEARNING_RATE
     )
 
     # Accelerator se encarga de mover todo al dispositivo (GPU)
@@ -81,6 +119,7 @@ def main():
     device = accelerator.device
     vae.to(device)
     text_encoder.to(device)
+    unet.to(device) # <--- Asegurarnos que U-Net también esté en el dispositivo
     
     print(f"🚀 Iniciando entrenamiento en dispositivo: {device}")
 
@@ -88,8 +127,15 @@ def main():
     
     global_step = 0
     for epoch in range(EPOCHS):
-        # Dividimos el total por los pasos de acumulación
-        progress_bar = tqdm(total=len(train_dataloader) // GRAD_ACCUM_STEPS, desc=f"Epoch {epoch+1}/{EPOCHS}")
+        
+        # Variables para métricas
+        epoch_loss_total = 0.0
+        batches_procesados = 0
+        text_grad_indicator = float('nan') # Inicializar a 'nan' para mayor claridad
+
+        # ✅ MEJORA (Tiempo): El total es el número de batches, no de pasos.
+        progress_bar = tqdm(total=len(train_dataloader), desc=f"Epoch {epoch+1}/{EPOCHS}")
+        
 
         for step, batch in enumerate(train_dataloader):
             # batch['pixel_values'] -> Imágenes ya normalizadas [-1, 1]
@@ -101,8 +147,9 @@ def main():
                 latents = vae.encode(batch["pixel_values"]).latent_dist.sample()
                 latents = latents * vae.config.scaling_factor
 
-                # 2. Codificar el prompt de texto
-                text_embeddings = text_encoder(batch["input_ids"])[0]
+            # 2. Codificar el prompt de texto
+            #    (Si el text_encoder está congelado, esto no usará gradientes)
+            text_embeddings = text_encoder(batch["input_ids"])[0]
 
             # 3. Generar ruido aleatorio
             noise = torch.randn_like(latents)
@@ -115,48 +162,85 @@ def main():
 
             # --- ¡El paso clave! ---
             # 6. Predecir el ruido usando la U-Net
-            #    La U-Net ve la imagen ruidosa (noisy_latents) y
-            #    usa el texto (text_embeddings) como "condición"
             noise_pred = unet(noisy_latents, timesteps, text_embeddings).sample
 
             # 7. Calcular la pérdida (Loss)
-            #    Qué tan lejos estuvo nuestra predicción (noise_pred)
-            #    del ruido real que añadimos (noise)
             loss = F.mse_loss(noise_pred, noise, reduction="mean")
+            
+            # Acumular la pérdida de este batch
+            epoch_loss_total += loss.item()
+            batches_procesados += 1
 
-            # 8. Backpropagation
+            # 8. Backpropagation (solo calculará gradientes para los params no congelados)
             accelerator.backward(loss)
             
-            # ✅ ¡CORRECCIÓN! 
+            # ✅ MEJORA (Tiempo): Actualizar la barra en CADA batch
+            progress_bar.update(1)
+            
             # El optimizador y la barra de progreso SÓLO deben actualizarse
             # cuando los gradientes se sincronizan (en el último paso de acumulación)
             if accelerator.sync_gradients:
+                
+                # --- ✅ CORRECCIÓN DE LÓGICA: Leemos el gradiente ANTES de step() y zero_grad() ---
+                text_grad_indicator = float('nan') # Resetear a nan por si acaso
+                if args.train_mode in ['all', 'text_encoder_only']:
+                    # Desenvolvemos el modelo para acceder a los parámetros de PyTorch
+                    unwrapped_text_encoder = accelerator.unwrap_model(text_encoder)
+                    # Comprobamos el gradiente de la capa final
+                    if unwrapped_text_encoder.text_model.final_layer_norm.weight.grad is not None:
+                        # Calculamos el gradiente medio y lo guardamos
+                        grad_val = unwrapped_text_encoder.text_model.final_layer_norm.weight.grad.mean().item()
+                        if not np.isnan(grad_val): # Comprobar si no es NaN
+                            text_grad_indicator = grad_val
+                # --- Fin del Indicador ---
+
                 optimizer.step()
                 optimizer.zero_grad()
                 
-                progress_bar.update(1)
-                progress_bar.set_postfix(loss=loss.item())
+                # --- Métricas para la barra de progreso ---
+                current_lr = optimizer.param_groups[0]['lr']
+                avg_loss = epoch_loss_total / batches_procesados
+                
+                # Actualizar la barra con las nuevas métricas
+                progress_bar.set_postfix(
+                    avg_loss=f"{avg_loss:.5f}", 
+                    lr=f"{current_lr:.8f}", # <-- LR en formato decimal
+                    text_grad=f"{text_grad_indicator:.2e}" # <-- Indicador del traductor (mostrará 'nan' si no se entrena)
+                )
+
+                # Resetear contadores para el próximo ciclo de acumulación
+                epoch_loss_total = 0.0
+                batches_procesados = 0
+            
+            # ✅ MEJORA (Tiempo): Mostrar métricas intermedias mientras acumula
+            else:
+                if batches_procesados > 0:
+                    current_lr = optimizer.param_groups[0]['lr']
+                    avg_loss = epoch_loss_total / batches_procesados
+                    progress_bar.set_postfix(
+                        avg_loss=f"{avg_loss:.5f} (acum...)", 
+                        lr=f"{current_lr:.8f}", # <-- LR en formato decimal
+                        text_grad=f"{text_grad_indicator:.2e}" # <-- Indicador del traductor
+                    )
 
     # --- 6. Guardar el Modelo Entrenado ---
     print("✅ Entrenamiento finalizado.")
     
-    # Guardar solo la U-Net, que es lo que hemos entrenado.
-    # Usamos unwrap_model para obtener el modelo de PyTorch puro.
-    final_unet = accelerator.unwrap_model(unet)
-    final_unet.save_pretrained(OUTPUT_DIR)
+    # --- INICIO DEL CAMBIO 3: LÓGICA DE GUARDADO ---
     
-    # (Opcional) También puedes guardar el pipeline completo
-    # from diffusers import StableDiffusionPipeline
-    # pipeline = StableDiffusionPipeline.from_pretrained(
-    #     MODEL_ID,
-    #     unet=final_unet,
-    #     text_encoder=text_encoder,
-    #     vae=vae,
-    #     tokenizer=tokenizer
-    # )
-    # pipeline.save_pretrained(os.path.join(OUTPUT_DIR, "pipeline_completo"))
-
-    print(f"💾 Modelo U-Net afinado guardado en: {OUTPUT_DIR}")
+    # Guardar la U-Net solo si la entrenamos
+    if args.train_mode in ['all', 'unet_only']:
+        final_unet = accelerator.unwrap_model(unet)
+        final_unet.save_pretrained(OUTPUT_DIR)
+        print(f"💾 Modelo U-Net afinado guardado en: {OUTPUT_DIR}")
+    
+    # Guardar el Text Encoder solo si lo entrenamos
+    if args.train_mode in ['all', 'text_encoder_only']:
+        final_text_encoder = accelerator.unwrap_model(text_encoder)
+        final_text_encoder.save_pretrained(os.path.join(OUTPUT_DIR, "text_encoder"))
+        print(f"💾 Modelo Text Encoder afinado guardado en: {os.path.join(OUTPUT_DIR, 'text_encoder')}")
+    
+    # --- FIN DEL CAMBIO 3 ---
 
 if __name__ == "__main__":
     main()
