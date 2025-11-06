@@ -1,11 +1,14 @@
 # ================================================================
 # train_tinyllama_kaggle.py — Fine-tuning TinyLlama-1.1B-Chat en dataset de arte (Kaggle GPU)
 # ================================================================
-# pip install transformers==4.44.2 accelerate==0.33.0 datasets==2.21.0 tensorboard
+# Instalar dependencias (solo la primera vez en una celda aparte):
+# !pip install transformers==4.44.2 accelerate==0.33.0 datasets==2.21.0 tensorboard
 # ================================================================
+
 import os
 import math
 import gc
+import re
 import torch
 import numpy as np
 from transformers import (
@@ -15,7 +18,7 @@ from transformers import (
     TrainingArguments,
     DataCollatorForLanguageModeling
 )
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 
 # ----------------------
 # ⚙️ Configuración
@@ -50,25 +53,53 @@ if tokenizer.pad_token is None:
 # ----------------------
 # 🧩 Cargar dataset desde Kaggle
 # ----------------------
-print("📂 Cargando dataset desde Kaggle...")
-dataset = load_dataset("josephriver12/dataset-arte")
+print("📂 Cargando dataset de texto desde Kaggle...")
 
-# Si tu dataset tiene una sola columna de texto, ajústala:
-column_name = list(dataset["train"].features.keys())[0]
-print(f"📜 Columna detectada en el dataset: {column_name}")
+# ✅ Carga directa desde el archivo .txt
+dataset = load_dataset(
+    "text",
+    data_files={"train": "/kaggle/input/dataset-arte/dataset_completo.txt"}
+)
 
-dataset = dataset["train"].train_test_split(test_size=0.1, seed=42)
+# ✅ Limpieza y segmentación por secciones
+def dividir_por_seccion(texto):
+    # Divide el texto cada vez que encuentre una cabecera "SECCION ..."
+    partes = re.split(r"SECCION\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑ\s]*", texto)
+    secciones = [p.strip() for p in partes if len(p.strip()) > 50]
+    return secciones
 
-# Tokenización
+# Crear una lista con todas las secciones extraídas
+textos_divididos = []
+for t in dataset["train"]["text"]:
+    textos_divididos.extend(dividir_por_seccion(t))
+
+print(f"📄 Secciones extraídas: {len(textos_divididos)}")
+
+# Convertir a dataset HuggingFace
+dataset = Dataset.from_dict({"text": textos_divididos})
+
+# Dividir en train/test
+dataset = dataset.train_test_split(test_size=0.1, seed=42)
+
+# ----------------------
+# ✂️ Tokenización
+# ----------------------
 def tokenize_function(examples):
     return tokenizer(
-        examples[column_name],
+        examples["text"],
         truncation=True,
         max_length=1024,
         padding="max_length"
     )
 
-tokenized_datasets = dataset.map(tokenize_function, batched=True, num_proc=2, remove_columns=[column_name])
+tokenized_datasets = dataset.map(
+    tokenize_function,
+    batched=True,
+    num_proc=2,
+    remove_columns=["text"]
+)
+
+print("✅ Tokenización completada.")
 
 # ----------------------
 # ⚖️ Data Collator
@@ -94,8 +125,8 @@ def compute_metrics(eval_pred):
 training_args = TrainingArguments(
     output_dir=output_dir,
     evaluation_strategy="epoch",
-    save_strategy="epoch",  # ⬅️ Guardará checkpoints por época
-    save_total_limit=3,      # ⬅️ Solo mantiene los 3 más recientes
+    save_strategy="epoch",
+    save_total_limit=3,
     num_train_epochs=3,
     per_device_train_batch_size=1,
     per_device_eval_batch_size=1,
