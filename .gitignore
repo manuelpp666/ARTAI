@@ -3,3 +3,5 @@ venv
 .venv
 models
 app/static/generated_art
+subir_modelo.py
+__pycache__
