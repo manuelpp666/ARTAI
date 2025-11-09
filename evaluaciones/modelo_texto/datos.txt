@@ -1,0 +1,19 @@
+Claves en checkpoint: ['model_state_dict', 'vocab', 'word2idx', 'idx2word', 'final_epoch', 'best_loss']
+Vocabulario: 15004 tokens | PAD index: 0
+Modelo cargado: 6,698,140 parámetros
+Total de secuencias aplanadas: 88314
+Primer elemento: Lista de 60 secuencias tokenizadas
+Tipo del primer elemento: <class 'list'>
+
+============================================================
+EVALUACIÓN FINAL DEL MODELO (ENTRENADO DESDE CERO)
+============================================================
+
+Iniciando evaluación...
+
+RESULTADOS:
+  Loss (Cross-Entropy):     3.6329
+  Perplexity:               37.82
+  Tokens evaluados:         5,210,526
+  Secuencias de prueba:     88314
+  Vocabulario:              15,004 tokens
