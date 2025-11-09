@@ -1,0 +1,6 @@
+=== ESTADÍSTICAS CLIPScore ===
+Promedio: 28.2241
+Desviación estándar: 5.5896
+Mínimo: 15.1494
+Máximo: 42.3204
+Percentil 25/50/75: [24.1316185 28.144701  32.7614212]
