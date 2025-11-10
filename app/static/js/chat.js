@@ -1,6 +1,9 @@
 const chatBox = document.getElementById("chat-box");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
+const modeSelector = document.getElementById("mode-selector");
+
+let modoActual = null;
 
 // Fondo dinámico (pinceladas flotantes)
 const canvas = document.getElementById("background");
@@ -44,11 +47,12 @@ function animate() {
 for (let i = 0; i < 40; i++) particles.push(new Particle());
 animate();
 
-// Chat
+// ===============================
+// Chat principal
+// ===============================
 function appendMessage(text, sender, imageUrl = null) {
     const msgDiv = document.createElement("div");
     msgDiv.classList.add("message", sender);
-
     msgDiv.innerHTML = `<p>${text}</p>`;
 
     if (imageUrl) {
@@ -56,7 +60,6 @@ function appendMessage(text, sender, imageUrl = null) {
         img.src = imageUrl;
         msgDiv.appendChild(img);
 
-        // Botón de descarga
         const downloadBtn = document.createElement("a");
         downloadBtn.href = imageUrl;
         downloadBtn.download = `arte_${text.slice(0, 8)}.png`;
@@ -69,47 +72,72 @@ function appendMessage(text, sender, imageUrl = null) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// ===============================
+// Selector de modo
+// ===============================
+document.querySelectorAll("#mode-selector button").forEach(btn => {
+    btn.addEventListener("click", () => {
+        modoActual = btn.dataset.mode;
+        appendMessage(`🔹 Modo seleccionado: ${btn.textContent}`, "bot");
+
+        // Oculta el selector para no confundir
+        modeSelector.style.display = "none";
+
+        // Activa el input
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+    });
+});
+
+// Desactivar entrada hasta que se elija modo
+userInput.disabled = true;
+sendBtn.disabled = true;
+
+// ===============================
+// Envío de mensajes
+// ===============================
 async function sendMessage() {
     const message = userInput.value.trim();
-    if (!message) return;
+    if (!message || !modoActual) return;
 
     appendMessage(message, "user");
     userInput.value = "";
 
-    // Mostrar loader
-    const loaderId = `loader-${Date.now()}`;
     const loaderDiv = document.createElement("div");
-    loaderDiv.id = loaderId;
     loaderDiv.classList.add("message", "bot");
-    loaderDiv.innerHTML = "<p>🎨 Generando imagen...</p>";
+    loaderDiv.innerHTML = "<p>⏳ Procesando...</p>";
     chatBox.appendChild(loaderDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    let data;
     try {
-        const res = await fetch("/api/predict/", {  // <-- endpoint de Gradio
+        const res = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ data: [message] })  // <-- Gradio espera un array
+            body: JSON.stringify({
+                message: message,
+                modo: modoActual   // 🔥 se envía el modo actual
+            })
         });
-        data = await res.json();
+
+        const data = await res.json();
+        loaderDiv.remove();
+
+        if (data.error) {
+            appendMessage(`❌ ${data.error}`, "bot");
+        } else if (data.tipo === "imagen") {
+            appendMessage("🖼️ Aquí tienes tu imagen generada:", "bot", data.url);
+        } else if (data.tipo === "texto") {
+            appendMessage(data.texto, "bot");
+        } else {
+            appendMessage("🤔 Respuesta desconocida del servidor.", "bot");
+        }
+
     } catch (err) {
+        loaderDiv.remove();
+        appendMessage("❌ Error de conexión con el servidor.", "bot");
         console.error(err);
-        loaderDiv.innerHTML = "❌ Error de conexión con el servidor.";
-        return;
-    }
-
-    // Remover loader
-    loaderDiv.remove();
-
-    if (data.error) {
-        appendMessage(`❌ ${data.error}`, "bot");
-    } else {
-        // Gradio devuelve la imagen en data[0]
-        appendMessage("🖼️ Aquí tienes tu imagen generada.", "bot", data.data[0]);
     }
 }
-
 
 sendBtn.addEventListener("click", sendMessage);
 userInput.addEventListener("keydown", e => {

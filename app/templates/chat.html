@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArteChatbot 🎨</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
     <canvas id="background"></canvas>
 
@@ -15,6 +17,13 @@
             <p>Habla con el arte. Inspira y crea.</p>
         </header>
 
+        <!-- NUEVO: selector de modo -->
+        <div id="mode-selector" class="mode-selector">
+            <p>Elige un modo para comenzar:</p>
+            <button data-mode="imagen">🖼️ Generador de imágenes</button>
+            <button data-mode="texto_cero">✍️ Texto (modelo desde cero)</button>
+            <button data-mode="texto_pre">🤖 Texto (modelo preentrenado)</button>
+        </div>
         <div id="chat-box"></div>
 
         <div class="input-area">
@@ -25,4 +34,5 @@
 
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </body>
+
 </html>

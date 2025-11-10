@@ -1,9 +1,8 @@
+# ================================================================
+# main.py — Interfaz Flask para ArtAI (solo generador de imágenes)
+# ================================================================
 from flask import Flask, render_template, request, jsonify
-import torch
-from app.core.nlp_module.entrenamiento_cero.transformer import Transformer
-from app.core.nlp_module.entrenamiento_cero.generator import generar_texto
-from app.core.nlp_module.preprocess import cargar_vocab
-from app.core.nlp_module.interpreter import detectar_intencion 
+from gradio_client import Client
 
 # ---------------------------------------------------
 # CONFIGURACIÓN FLASK
@@ -11,30 +10,12 @@ from app.core.nlp_module.interpreter import detectar_intencion
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
 
 # ---------------------------------------------------
-# CONFIGURACIÓN DEL DISPOSITIVO
+# CONFIGURACIÓN CLIENTE HUGGING FACE
 # ---------------------------------------------------
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+HF_REPO_ID = "Joseph1112/ArtAI"  # Tu Space o modelo en Hugging Face
+client = Client(HF_REPO_ID)
 
-# ---------------------------------------------------
-# CARGA DEL VOCABULARIO
-# ---------------------------------------------------
-ruta_vocab = "models/vocab_art.pt"  # cambia si lo guardaste en otra ruta
-stoi, itos = cargar_vocab(ruta_vocab)
-vocab_size = len(stoi)
-seq_len = 50
-
-# ---------------------------------------------------
-# CARGA DEL MODELO
-# ---------------------------------------------------
-modelo = Transformer(vocab_size=vocab_size).to(device)
-
-ruta_modelo = "models/transformer_art_model.pth"
-checkpoint = torch.load(ruta_modelo, map_location=device)
-modelo.load_state_dict(checkpoint["modelo"])
-
-modelo.eval()
-print(f"✅ Modelo cargado correctamente desde {ruta_modelo}")
-print(f"✅ Vocabulario con {vocab_size} caracteres cargado.")
+print(f"✅ Cliente Hugging Face inicializado con: {HF_REPO_ID}")
 
 # ---------------------------------------------------
 # RUTAS FLASK
@@ -45,31 +26,59 @@ def home():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    user_message = request.json.get("message", "")
+    data = request.json
+    modo = data.get("modo")  # imagen / texto_cero / texto_pre
+    mensaje = data.get("message", "")
 
-    # 🔍 Detectar intención
-    tipo = detectar_intencion(user_message)
-    print(f"🎯 Intención detectada: {tipo}")
+    # ---------------------------------------
+    # 🖼️ GENERADOR DE IMÁGENES DE ARTE
+    # ---------------------------------------
+    if modo == "imagen":
+        try:
+            print(f"🎨 Generando imagen para prompt: {mensaje}")
+            result = client.predict(prompt=mensaje, api_name="/predict")
 
-    if tipo == "imagen":
-        # Aquí podrías llamar a tu generador de imágenes (si lo tienes)
-        respuesta = "🖼️ Detecté que deseas generar una imagen relacionada con arte."
-    elif tipo == "texto":
-        # Generar texto coherente
-        respuesta = generar_texto(
-            modelo=modelo,
-            texto_inicio=user_message,
-            longitud=200,        # puedes ajustarlo
-            temperatura=0.9,     # menor → más coherente, mayor → más creativo
-            seq_len=seq_len,
-            device=device,
-            stoi=stoi,
-            itos=itos
-        )
+            # Si es una URL, la devolvemos directo
+            if isinstance(result, str) and result.startswith("http"):
+                return jsonify({"tipo": "imagen", "url": result})
+
+            # Si no es URL, puede ser ruta o PIL.Image
+            from PIL import Image
+            import os
+
+            img_folder = os.path.join(app.static_folder, "generated")
+            os.makedirs(img_folder, exist_ok=True)
+
+            img_path = os.path.join(img_folder, f"arte_{hash(mensaje)}.png")
+
+            if isinstance(result, str) and os.path.exists(result):
+                # Si es una ruta de archivo local
+                Image.open(result).save(img_path)
+            else:
+                # Si es un objeto tipo PIL.Image o similar
+                try:
+                    result.save(img_path)
+                except Exception:
+                    return jsonify({"error": "No se pudo procesar la imagen generada"}), 500
+
+            # Devuelve una URL accesible desde el navegador
+            img_url = f"/static/generated/{os.path.basename(img_path)}"
+            return jsonify({"tipo": "imagen", "url": img_url})
+
+        except Exception as e:
+            return jsonify({"error": f"Error al generar imagen: {str(e)}"}), 500
+    # ---------------------------------------
+    # ✍️ MODO TEXTO (Placeholder)
+    # ---------------------------------------
+    elif modo in ("texto_cero", "texto_pre"):
+        return jsonify({
+            "tipo": "texto",
+            "texto": f"⚠️ Modo '{modo}' deshabilitado temporalmente. Solo disponible el generador de imágenes."
+        })
+
     else:
-        respuesta = "🤖 No entendí bien tu intención. ¿Quieres que te explique algo o genere una imagen?"
+        return jsonify({"error": f"Modo desconocido: {modo}"}), 400
 
-    return jsonify({"text": respuesta, "tipo": tipo})
 
 # ---------------------------------------------------
 # MAIN
