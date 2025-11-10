@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import torch
-from app.core.nlp_module.transformer import Transformer
-from app.core.nlp_module.generator import generar_texto
+from app.core.nlp_module.entrenamiento_cero.transformer import Transformer
+from app.core.nlp_module.entrenamiento_cero.generator import generar_texto
 from app.core.nlp_module.preprocess import cargar_vocab
 from app.core.nlp_module.interpreter import detectar_intencion 
 

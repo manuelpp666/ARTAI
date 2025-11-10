@@ -1,6 +1,6 @@
 # ================================================================
 # app/core/nlp_module/transformer.py
-# 
+# Módulo de Ejemplo de Transformer para NLP: No se usó pero es importante saber su arquitectura
 # ================================================================
 import torch
 import torch.nn as nn
