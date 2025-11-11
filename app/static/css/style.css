@@ -24,8 +24,8 @@ canvas#background {
 }
 
 .container {
-    width: 95%;
-    max-width: 750px;
+    width: 98%;
+    max-width: 950px;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     border-radius: 16px;
@@ -33,7 +33,7 @@ canvas#background {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    margin: 30px auto;
+    margin: 40px auto;
     animation: fadeIn 0.8s ease-in;
 }
 
