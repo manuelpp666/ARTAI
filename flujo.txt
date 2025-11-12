@@ -1,22 +1,44 @@
-[Usuario]
-    │
-    ▼
-[Chat (interfaz web con Flask)]
-    │
-    ▼
-[Modelo de Lenguaje (tipo GPT)]
- ├─> Interpreta lo que el usuario dice
- ├─> Si es conversación → responde con texto artístico
- └─> Si detecta que el usuario pide generar una imagen
-        │
-        ▼
-        CNN → detecta estilo o color base
-        ▼
-    [Modelo Generador de Imágenes (difusión)]
-        ├─> Recibe la descripción del Modelo de Lenguaje
-        ├─> Genera una imagen artística coherente con el prompt
-        ▼
-[Salida: Imagen generada + texto del chatbot]
-    │
-    ▼
-[Usuario ve el resultado y puede volver a interactuar]
+# --- Núcleo de IA y embeddings ---
+torch==2.9.0
+torchvision==0.24.0
+transformers==4.43.3
+sentence-transformers==5.1.2
+faiss-cpu==1.12.0
+
+# --- LangChain y ecosistema ---
+langchain==0.1.19
+langchain-core==0.1.52
+langchain-community==0.0.38
+langchain-text-splitters==0.0.1
+langchain-huggingface==1.0.1
+langsmith==0.1.147
+
+# --- Utilidades LangGraph (si usas flujos de agentes) ---
+langgraph==1.0.3
+langgraph-checkpoint==3.0.1
+langgraph-prebuilt==1.0.2
+langgraph-sdk==0.2.9
+
+# --- Procesamiento de datos ---
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.5.2
+scipy==1.16.3
+datasets==4.4.1
+
+# --- Backend y API ---
+Flask==3.1.2
+fastapi==0.121.1
+uvicorn==0.38.0
+
+# --- Cliente Gradio (para generar desde modelo remoto si es necesario) ---
+gradio==5.49.1
+gradio_client==1.13.3
+
+# --- Utilidades varias ---
+python-dotenv==1.2.1
+requests==2.32.5
+tqdm==4.67.1
+pyarrow==22.0.0
+pydantic==2.11.10
+huggingface-hub==0.36.0

@@ -5,3 +5,6 @@ models/diffusion_art_model
 app/static/generated_art
 subir_modelo.py
 __pycache__
+
+arte_index.pkl
+arte_faiss_index
