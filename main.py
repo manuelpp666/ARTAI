@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, jsonify
 from gradio_client import Client
 import os
 from models_utils.arte_desde_cero import cargar_modelo_desde_cero, generar_texto
+from models_utils.texto_preentrenado import arte
 
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
 
@@ -76,10 +77,11 @@ def chat():
 
     # =================== TEXTO PREENTRENADO (a futuro) ===================
     elif modo == "texto_pre":
-        return jsonify({
-            "tipo": "texto",
-            "texto": "⚠️ Modo 'texto_pre' aún no implementado."
-        })
+        try:
+            respuesta = arte(mensaje)
+            return jsonify({"tipo": "texto", "texto": respuesta})
+        except Exception as e:
+            return jsonify({"error": f"❌ Error al generar texto: {str(e)}"}), 500
 
     else:
         return jsonify({"error": f"Modo desconocido: {modo}"}), 400
