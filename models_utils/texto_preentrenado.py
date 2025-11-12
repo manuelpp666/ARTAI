@@ -17,7 +17,8 @@ from langchain_community.vectorstores import FAISS
 # 1️⃣ CONFIGURACIÓN DE RUTAS Y MODELOS
 # ============================================================
 
-INDEX_PATH = "../arte_faiss_index"  # Debe coincidir con tu índice creado
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+INDEX_PATH = os.path.join(BASE_DIR, "..", "arte_faiss_index")
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 LLM_MODEL_ID = "microsoft/phi-3-mini-4k-instruct"
 DEVICE = "cpu"  # Cambia a 'cuda' si tienes GPU
