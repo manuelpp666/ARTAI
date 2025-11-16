@@ -5,7 +5,6 @@
 import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
-
 # LangChain moderno
 from langchain_community.llms import HuggingFacePipeline
 from langchain.chains import RetrievalQA
@@ -19,8 +18,10 @@ from langchain_community.vectorstores import FAISS
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(BASE_DIR, "..", "arte_faiss_index")
+
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 LLM_MODEL_ID = "microsoft/phi-3-mini-4k-instruct"
+
 DEVICE = "cpu"  # Cambia a 'cuda' si tienes GPU
 
 # ============================================================
@@ -28,7 +29,11 @@ DEVICE = "cpu"  # Cambia a 'cuda' si tienes GPU
 # ============================================================
 
 print("🔁 Cargando índice FAISS local...")
-embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL, model_kwargs={"device": DEVICE})
+
+embeddings = HuggingFaceEmbeddings(
+    model_name=EMBEDDING_MODEL,
+    model_kwargs={"device": DEVICE}
+)
 
 vectorstore = FAISS.load_local(
     folder_path=INDEX_PATH,
@@ -37,6 +42,7 @@ vectorstore = FAISS.load_local(
 )
 
 retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+
 print("✅ Índice FAISS cargado correctamente.\n")
 
 # ============================================================
@@ -55,12 +61,14 @@ if use_gpu:
     try:
         from transformers import BitsAndBytesConfig
         print("💪 GPU detectada — activando cuantización 4-bit con bitsandbytes.")
+
         quant_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True
         )
+
         model = AutoModelForCausalLM.from_pretrained(
             LLM_MODEL_ID,
             quantization_config=quant_config,
@@ -86,6 +94,7 @@ else:
     )
 
 # Pipeline robusto (modo eager y sin DynamicCache)
+
 llm_pipeline = pipeline(
     "text-generation",
     model=model,
@@ -101,15 +110,17 @@ llm_pipeline = pipeline(
 )
 
 llm = HuggingFacePipeline(pipeline=llm_pipeline)
+
 print("✅ Phi-3-mini listo (CPU/GPU compatible, modo eager activado)\n")
+
 # ============================================================
 # 4️⃣ PROMPT PERSONALIZADO
 # ============================================================
 
 prompt = PromptTemplate(
     input_variables=["context", "question"],
-    template="""Eres un experto en historia del arte. 
-Responde en español con claridad y precisión, usando únicamente el contexto proporcionado.
+    template="""
+Eres un experto en historia del arte. Responde en español con claridad y precisión, usando únicamente el contexto proporcionado.
 
 CONTEXTO:
 {context}
@@ -117,7 +128,8 @@ CONTEXTO:
 PREGUNTA:
 {question}
 
-RESPUESTA (en español):"""
+RESPUESTA (en español):
+"""
 )
 
 # ============================================================
@@ -141,11 +153,15 @@ def arte(pregunta):
     print(f"\n{'='*70}")
     print(f"PREGUNTA: {pregunta}")
     print('='*70)
+
     result = qa.invoke({"query": pregunta})
+
     print(f"RESPUESTA: {result['result'].strip()}\n")
+
     print("FUENTES:")
     for d in result["source_documents"]:
-        print(f"  • {d.metadata.get('title', 'Sin título')}")
+        print(f" • {d.metadata.get('title', 'Sin título')}")
+
     return result['result']
 
 # ============================================================
@@ -154,7 +170,3 @@ def arte(pregunta):
 
 if __name__ == "__main__":
     arte("¿Qué es el arte?")
-    arte("¿Quién fue Robert Delaunay?")
-    arte("¿Quién es Vincent Van Gogh?")
-    arte("¿Qué es el simultaneísmo?")
-    arte("Obras famosas de Delaunay sobre ritmo")

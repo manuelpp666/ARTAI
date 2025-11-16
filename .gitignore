@@ -1,8 +1,9 @@
 nombre_entorno
 venv
 .venv
-models/diffusion_art_model
+models
 app/static/generated_art
+app/static/generated
 subir_modelo.py
 __pycache__
 
