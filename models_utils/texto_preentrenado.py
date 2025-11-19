@@ -1,172 +1,151 @@
 # ============================================================
-# texto_preentrenado.py — Phi-3-mini + FAISS para arte (moderno)
+# texto_preentrenado.py — Implementación Manual (Sin Chains)
 # ============================================================
 
 import os
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
-# LangChain moderno
-from langchain_community.llms import HuggingFacePipeline
-from langchain.chains import RetrievalQA
-from langchain.prompts.prompt import PromptTemplate
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from transformers import AutoTokenizer, pipeline
+
+# Usamos solo los componentes base que sí te funcionan
+from langchain_huggingface import HuggingFacePipeline, HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 # ============================================================
-# 1️⃣ CONFIGURACIÓN DE RUTAS Y MODELOS
+# 1️⃣ CONFIGURACIÓN
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-INDEX_PATH = os.path.join(BASE_DIR, "..", "arte_faiss_index")
+# Ajustamos la ruta para subir dos niveles: models_utils -> ARTAI -> raiz
+INDEX_PATH = os.path.join(BASE_DIR,"..", "arte_faiss_index")
 
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 LLM_MODEL_ID = "microsoft/phi-3-mini-4k-instruct"
 
-DEVICE = "cpu"  # Cambia a 'cuda' si tienes GPU
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"⚙️ Dispositivo: {DEVICE.upper()}")
 
 # ============================================================
-# 2️⃣ CARGAR ÍNDICE FAISS
+# 2️⃣ CARGAR MODELOS
 # ============================================================
 
-print("🔁 Cargando índice FAISS local...")
-
+# A. Embeddings
+print("1. Cargando Embeddings...")
 embeddings = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL,
     model_kwargs={"device": DEVICE}
 )
 
-vectorstore = FAISS.load_local(
-    folder_path=INDEX_PATH,
-    embeddings=embeddings,
-    allow_dangerous_deserialization=True
-)
-
-retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-
-print("✅ Índice FAISS cargado correctamente.\n")
-
-# ============================================================
-# 3️⃣ CARGAR MODELO PHI-3-MINI (AUTOMÁTICO CPU / GPU)
-# ============================================================
-
-print("Cargando modelo Phi-3-mini (detección automática de hardware)...")
-
-tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL_ID, trust_remote_code=True)
-if tokenizer.pad_token is None:
-    tokenizer.pad_token = tokenizer.eos_token
-
-use_gpu = torch.cuda.is_available()
-
-if use_gpu:
-    try:
-        from transformers import BitsAndBytesConfig
-        print("💪 GPU detectada — activando cuantización 4-bit con bitsandbytes.")
-
-        quant_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16,
-            bnb_4bit_use_double_quant=True
-        )
-
-        model = AutoModelForCausalLM.from_pretrained(
-            LLM_MODEL_ID,
-            quantization_config=quant_config,
-            device_map="auto",
-            torch_dtype=torch.bfloat16,
-            trust_remote_code=True
-        )
-    except Exception as e:
-        print(f"⚠️ No se pudo usar bitsandbytes: {e}\nCargando modelo normal en GPU.")
-        model = AutoModelForCausalLM.from_pretrained(
-            LLM_MODEL_ID,
-            device_map="auto",
-            torch_dtype=torch.bfloat16,
-            trust_remote_code=True
-        )
-else:
-    print("🧠 CPU detectada — cargando modelo en float32 (sin cuantización).")
-    model = AutoModelForCausalLM.from_pretrained(
-        LLM_MODEL_ID,
-        device_map="auto",
-        torch_dtype=torch.float32,
-        trust_remote_code=True
+# B. Vector Store (FAISS)
+print("2. Cargando Índice FAISS...")
+try:
+    vectorstore = FAISS.load_local(
+        folder_path=INDEX_PATH,
+        embeddings=embeddings,
+        allow_dangerous_deserialization=True
     )
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+    print("✅ FAISS cargado.")
+except Exception as e:
+    print(f"⚠️ Error cargando FAISS: {e}")
+    retriever = None
 
-# Pipeline robusto (modo eager y sin DynamicCache)
+# C. Modelo de Lenguaje (Phi-3)
+print("3. Cargando LLM...")
+tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL_ID, trust_remote_code=True)
 
-llm_pipeline = pipeline(
+model_kwargs = {
+    "device_map": "auto",
+    "trust_remote_code": True,
+    "torch_dtype": torch.float16 if DEVICE == "cuda" else torch.float32
+}
+
+text_generation_pipeline = pipeline(
     "text-generation",
-    model=model,
+    model=LLM_MODEL_ID,
     tokenizer=tokenizer,
-    torch_dtype=torch.float32 if not use_gpu else torch.bfloat16,
-    device_map="auto",
-    temperature=0.6,
-    max_new_tokens=512,
-    model_kwargs={
-        "use_cache": False,
-        "attn_implementation": "eager"
-    }
+    max_new_tokens=1024,
+    temperature=0.1,
+    do_sample=True,
+    return_full_text=False, # Importante para no repetir el prompt
+    **model_kwargs
 )
 
-llm = HuggingFacePipeline(pipeline=llm_pipeline)
-
-print("✅ Phi-3-mini listo (CPU/GPU compatible, modo eager activado)\n")
+llm = HuggingFacePipeline(pipeline=text_generation_pipeline)
+print("✅ LLM listo.")
 
 # ============================================================
-# 4️⃣ PROMPT PERSONALIZADO
+# 3️⃣ CLASE QA MANUAL (Reemplaza a RetrievalQA)
 # ============================================================
 
-prompt = PromptTemplate(
-    input_variables=["context", "question"],
-    template="""
-Eres un experto en historia del arte. Responde en español con claridad y precisión, usando únicamente el contexto proporcionado.
+class ManualQA:
+    def __init__(self, llm, retriever):
+        self.llm = llm
+        self.retriever = retriever
+
+    def invoke(self, inputs):
+        """
+        Simula el comportamiento de qa.invoke({'query': '...'}) con limpieza de texto.
+        """
+        query = inputs.get("query", "")
+        if not query:
+            return {"result": "Error: Pregunta vacía."}
+            
+        if not self.retriever:
+            return {"result": "Error: El sistema de memoria (FAISS) no se pudo cargar."}
+
+        # 1. RECUPERACIÓN
+        try:
+            docs = self.retriever.invoke(query)
+        except:
+            docs = self.retriever.get_relevant_documents(query)
+        
+        # 2. CONTEXTO
+        context_text = "\n\n".join([d.page_content for d in docs])
+        
+        # 3. PROMPT
+        prompt = f"""<|system|>
+Eres un experto en historia del arte. Responde a la pregunta basándote únicamente en el siguiente contexto proporcionado.
+Si la respuesta no está en el contexto, di que no lo sabes.
 
 CONTEXTO:
-{context}
+{context_text}
+<|end|>
+<|user|>
+{query}
+<|end|>
+<|assistant|>"""
 
-PREGUNTA:
-{question}
-
-RESPUESTA (en español):
-"""
-)
-
-# ============================================================
-# 5️⃣ CONFIGURAR RETRIEVAL QA
-# ============================================================
-
-qa = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=retriever,
-    return_source_documents=True,
-    chain_type_kwargs={"prompt": prompt}
-)
-
-# ============================================================
-# 6️⃣ FUNCIÓN DE CONSULTA
-# ============================================================
-
-def arte(pregunta):
-    """Genera respuesta usando modelo preentrenado + FAISS"""
-    print(f"\n{'='*70}")
-    print(f"PREGUNTA: {pregunta}")
-    print('='*70)
-
-    result = qa.invoke({"query": pregunta})
-
-    print(f"RESPUESTA: {result['result'].strip()}\n")
-
-    print("FUENTES:")
-    for d in result["source_documents"]:
-        print(f" • {d.metadata.get('title', 'Sin título')}")
-
-    return result['result']
+        # 4. GENERACIÓN
+        print(f"🔎 Consultando LLM con contexto de {len(docs)} documentos...")
+        raw_response = self.llm.invoke(prompt)
+        
+        # --- NUEVO: LIMPIEZA DE RESPUESTA ---
+        # Si la respuesta no termina en puntuación, cortamos hasta el último punto.
+        respuesta_final = raw_response.strip()
+        if respuesta_final and respuesta_final[-1] not in [".", "!", "?"]:
+            # Buscamos el último punto final
+            ultimo_punto = respuesta_final.rfind(".")
+            if ultimo_punto > 0:
+                respuesta_final = respuesta_final[:ultimo_punto+1]
+            else:
+                # Si no hay puntos, dejamos la respuesta tal cual (o podrías añadir "...")
+                pass
+        # ------------------------------------
+        
+        # 5. RETORNO
+        return {
+            "result": respuesta_final,
+            "source_documents": docs
+        }
 
 # ============================================================
-# 7️⃣ EJEMPLOS DE USO
+# 4️⃣ INSTANCIA GLOBAL
 # ============================================================
+
+# Esta es la variable 'qa' que importa tu main.py
+qa = ManualQA(llm, retriever)
 
 if __name__ == "__main__":
-    arte("¿Qué es el arte?")
+    # Prueba rápida si ejecutas este archivo directo
+    resp = qa.invoke({"query": "¿Qué es el impresionismo?"})
+    print("\nRESPUESTA FINAL:", resp["result"])
